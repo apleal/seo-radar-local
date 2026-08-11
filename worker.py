@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-"""SEO Command Center worker — runs trackers, polls the dashboard queue, deploys.
+"""SEO Radar Local worker â€” runs trackers, polls the dashboard queue, deploys.
 
 Commands:
   python worker.py run <tool>        run one tool now (rankings | research-page |
                                      competitors | ai-visibility | site-health |
                                      link-gap | map-grid | all)
   python worker.py render            re-render every page from stored data (free)
-  python worker.py serve [port]      local mode — serve the dashboard at localhost:8000
+  python worker.py serve [port]      local mode â€” serve the dashboard at localhost:8000
   python worker.py deploy            deploy the site to Cloudflare Pages (hosted mode)
   python worker.py deploy-config     push ACCESS_KEY + DataForSEO secrets + KV binding
                                      to the Pages project (one-time, after setup.py)
-  python worker.py loop              hosted mode — poll the refresh/manage queue every
+  python worker.py loop              hosted mode â€” poll the refresh/manage queue every
                                      2 min and auto-run the daily refresh (put this in
                                      cron / launchd / a systemd timer, or just leave a
                                      terminal running)
 
 Local mode needs nothing but DataForSEO credentials. Hosted mode (self-serve
 refresh buttons, keyword management and live research from the browser) needs a
-free Cloudflare account — see README.
+free Cloudflare account â€” see README.
 """
 import datetime
 import http.server
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -60,9 +61,9 @@ PAGES = {  # rendered file -> site path
 def run_tool(name):
     steps = TOOLS.get(name)
     if not steps:
-        raise SystemExit(f"unknown tool '{name}' — one of: {', '.join(TOOLS)}, all")
+        raise SystemExit(f"unknown tool '{name}' â€” one of: {', '.join(TOOLS)}, all")
     for script, args in steps:
-        print(f"→ {script} {' '.join(args)}", flush=True)
+        print(f"â†’ {script} {' '.join(args)}", flush=True)
         r = subprocess.run([sys.executable, str(REPO / "tracker" / script), *args])
         if r.returncode != 0:
             raise SystemExit(r.returncode)  # the tool already printed why
@@ -77,7 +78,7 @@ def render_all():
         try:
             subprocess.run([sys.executable, str(REPO / "tracker" / script), *args], check=True)
         except subprocess.CalledProcessError:
-            print(f"  ({script} skipped — no data yet)", flush=True)
+            print(f"  ({script} skipped â€” no data yet)", flush=True)
     copy_pages()
 
 
@@ -88,19 +89,51 @@ def copy_pages():
             shutil.copy(f, config.SITE / dst)
 
 
-def serve(port=8000):
+class DashboardHandler(http.server.SimpleHTTPRequestHandler):
+    """Sirve exclusivamente el directorio publico, sin listados."""
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Content-Security-Policy", "frame-ancestors 'self'")
+        super().end_headers()
+
+    def list_directory(self, path):
+        self.send_error(404, "No encontrado")
+        return None
+
+    def do_GET(self):
+        if urllib.parse.urlsplit(self.path).path == "/health":
+            body = json.dumps({"status": "ok", "service": "seo-radar-local"}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
+
+
+def _empty_page():
+    target = config.SITE / "index.html"
+    if not target.exists() or target.stat().st_size == 0:
+        target.write_text('''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SEO Radar Local</title><style>body{background:#08080b;color:#fff;font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0}.box{max-width:620px;padding:36px;border:1px solid #333;border-radius:16px}h1{color:#ff7a2e}</style></head><body><main class="box"><h1>SEO Radar Local</h1><p>Todavia no hay ninguna web configurada.</p><p>Ejecuta <code>python setup.py</code> y despues <code>python worker.py run all</code>.</p></main></body></html>''', encoding="utf-8")
+
+def serve(port=None):
+    port = int(port if port is not None else os.environ.get("PORT", "8000"))
     render_all()
+    _empty_page()
     import functools
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(config.SITE))
-    print(f"Dashboard → http://localhost:{port}  (Ctrl-C to stop)")
-    print("Note: refresh/manage/research buttons need hosted mode (Cloudflare Pages Functions).")
-    http.server.HTTPServer(("127.0.0.1", port), handler).serve_forever()
+    handler = functools.partial(DashboardHandler, directory=str(config.SITE))
+    print(f"SEO Radar Local disponible en 0.0.0.0:{port} (Ctrl-C para detener)")
+    print("Protege el panel con autenticacion en el proxy. Algunas acciones requieren Cloudflare Pages Functions.")
+    http.server.ThreadingHTTPServer(("0.0.0.0", port), handler).serve_forever()
 
 
 def _cf():
     cf = config.cloudflare()
     if not cf:
-        raise SystemExit("Hosted mode not configured — set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
+        raise SystemExit("El modo alojado no está configurado â€” set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
                          "(or use `python worker.py serve` for local mode).")
     return cf
 
@@ -132,7 +165,7 @@ def deploy_config():
     try:
         _cf_api(cf, f"/accounts/{acct}/pages/projects/{cf['project']}")
     except urllib.error.HTTPError:
-        print(f"Creating Pages project '{cf['project']}'…")
+        print(f"Creating Pages project '{cf['project']}'â€¦")
         _cf_api(cf, f"/accounts/{acct}/pages/projects", "POST",
                 {"name": cf["project"], "production_branch": "main"})
     # ensure KV namespace
@@ -156,7 +189,7 @@ def deploy_config():
         "kv_namespaces": {"REFRESH_KV": {"namespace_id": ns}},
     }}}
     _cf_api(cf, f"/accounts/{acct}/pages/projects/{cf['project']}", "PATCH", payload)
-    print("✓ Pages project configured (access key, DataForSEO secrets, queue binding).")
+    print("âœ“ Pages project configured (access key, DataForSEO secrets, queue binding).")
     print("Now run: python worker.py run all && python worker.py deploy")
 
 
@@ -171,10 +204,10 @@ def _kv(cf, path, method="GET", data=None):
 def loop():
     cf = _cf()
     if not cf.get("kv_namespace"):
-        raise SystemExit("No CF_KV_NAMESPACE in .env — run `python worker.py deploy-config` first.")
+        raise SystemExit("Falta CF_KV_NAMESPACE en .env â€” ejecuta primero `python worker.py deploy-config`.")
     run_hour = int(config.env("DAILY_REFRESH_HOUR", "6"))
     last_daily = None
-    print(f"Polling queue every 120s; daily refresh at {run_hour:02d}:00. Ctrl-C to stop.")
+    print(f"Consultando la cola cada 120 s; actualización diaria a las {run_hour:02d}:00. Ctrl-C to stop.")
     while True:
         try:
             # 1. apply keyword/domain management ops queued from the dashboard
@@ -182,7 +215,7 @@ def loop():
             pending = []
             if r.returncode == 10:
                 pending.append("rankings")
-            # 2. requested refreshes — single "queue" key, not /keys?prefix=
+            # 2. requested refreshes â€” single "queue" key, not /keys?prefix=
             # (KV free tier caps list ops at 1,000/day; reads at 100,000/day)
             try:
                 queued = _kv(cf, "/values/queue")
@@ -213,7 +246,7 @@ def loop():
                 render_all()
                 deploy()
         except Exception as e:
-            print(f"loop error (retrying in 120s): {e}", flush=True)
+            print(f"error del bucle (nuevo intento en 120 s): {e}", flush=True)
         time.sleep(120)
 
 
@@ -229,7 +262,7 @@ if __name__ == "__main__":
     elif cmd == "render":
         render_all()
     elif cmd == "serve":
-        serve(int(sys.argv[2]) if len(sys.argv) > 2 else 8000)
+        serve(int(sys.argv[2]) if len(sys.argv) > 2 else None)
     elif cmd == "deploy":
         render_all()
         deploy()
