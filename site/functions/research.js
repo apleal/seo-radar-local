@@ -1,6 +1,6 @@
-// Live keyword research proxy — calls DataForSEO from the edge so credentials
+// Live keyword research proxy â€” calls DataForSEO from the edge so credentials
 // never reach the browser. Auth enforced by _middleware.js (cookie gate).
-// Cost guard: DAILY_LIMIT runs/day tracked in KV. Each run ≈ $0.01-0.05.
+// Cost guard: DAILY_LIMIT runs/day tracked in KV. Each run â‰ˆ $0.01-0.05.
 const DAILY_LIMIT = 20;
 const SUGGEST_API = "https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_suggestions/live";
 const RANKED_API = "https://api.dataforseo.com/v3/dataforseo_labs/google/ranked_keywords/live";
@@ -9,11 +9,11 @@ const MAX_SEEDS = 5;
 export async function onRequestPost(context) {
   const login = context.env.DFS_LOGIN, pass = context.env.DFS_PASSWORD;
   if (!login || !pass)
-    return json({ ok: false, error: "DataForSEO credentials not configured on the server" }, 500);
+    return json({ ok: false, error: "Las credenciales de DataForSEO no están configuradas en el servidor" }, 500);
 
   let body;
   try { body = await context.request.json(); }
-  catch { return json({ ok: false, error: "invalid JSON" }, 400); }
+  catch { return json({ ok: false, error: "JSON no válido" }, 400); }
 
   const mode = body.mode || "";
   const loc = parseInt(body.location_code, 10) || 2840;
@@ -23,7 +23,7 @@ export async function onRequestPost(context) {
   if (mode === "seeds") {
     const seeds = (Array.isArray(body.seeds) ? body.seeds : [])
       .map(s => String(s).trim().slice(0, 80)).filter(Boolean).slice(0, MAX_SEEDS);
-    if (!seeds.length) return json({ ok: false, error: "at least one seed keyword required" }, 400);
+    if (!seeds.length) return json({ ok: false, error: "se necesita al menos una palabra clave semilla" }, 400);
     tasks = seeds.map(seed => ({
       url: SUGGEST_API,
       payload: [{ keyword: seed, location_code: loc, language_code: lang, limit: 40,
@@ -32,7 +32,7 @@ export async function onRequestPost(context) {
   } else if (mode === "competitor") {
     const dom = String(body.domain || "").toLowerCase()
       .replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return json({ ok: false, error: "invalid domain" }, 400);
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return json({ ok: false, error: "dominio no válido" }, 400);
     tasks = [{
       url: RANKED_API,
       payload: [{ target: dom, location_code: loc, language_code: lang, limit: 200,
@@ -64,7 +64,7 @@ export async function onRequestPost(context) {
       });
       d = await r.json();
     } catch (e) {
-      return json({ ok: false, error: "DataForSEO request failed: " + e.message }, 502);
+      return json({ ok: false, error: "DataForSEO request no se pudo completar: " + e.message }, 502);
     }
     cost += d.cost || 0;
     const task = (d.tasks || [])[0] || {};

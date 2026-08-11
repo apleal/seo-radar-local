@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Renders the /explorer page — Ahrefs-style Site Explorer for any domain or URL.
+"""Renders the /explorer page â€” Ahrefs-style Explorador de sitios for any domain or URL.
 
 Static shell page; all analysis happens client-side against the /explorer
 Pages Function (live DataForSEO proxy, 24h KV cache). A full all-tabs run
@@ -81,41 +81,41 @@ tr:last-child td{border-bottom:none}
 _CONTENT = r"""<div class="panel">
   <div class="frow">
     <input type="text" id="dom" placeholder="any-domain.com or a full page URL" autofocus>
-    <button class="gobtn" id="runbtn">Analyze<span id="spin"></span></button>
+    <button class="gobtn" id="runbtn">Analizar<span id="spin"></span></button>
   </div>
-  <div class="hint" id="hintline">Overview and history charts run first. Then click through the tabs, each pulls live on first view and caches for 24 hours. Full deep analysis of one domain ≈ $0.20.</div>
+  <div class="hint" id="hintline">Overview and history charts run first. Then click through the tabs, each pulls live on first view and caches for 24 hours. Full deep analysis of one domain â‰ˆ $0.20.</div>
 </div>
 
-<div class="pagemode" id="pagemode">Page Inspect mode: analyzing a single URL. Backlinks, anchors and referring domains are scoped to this page; keywords show what this page ranks for.</div>
+<div class="pagemode" id="pagemode">Page Inspect mode: analyzing a single URL. Enlaces entrantes, anchors and referring domains are scoped to this page; keywords show what this page ranks for.</div>
 <div class="kpis" id="kpis" style="display:none"></div>
 <div class="chartrow" id="charts" style="display:none"></div>
 <div class="tabwrap" id="tabs" style="display:none">
   <div class="tabgroup"><div class="tglbl">Backlink profile</div>
     <div class="tabs">
-      <button data-t="backlinks">Backlinks</button>
-      <button data-t="anchors">Anchors</button>
-      <button data-t="refdomains">Ref. Domains</button>
+      <button data-t="backlinks">Enlaces entrantes</button>
+      <button data-t="anchors">Textos ancla</button>
+      <button data-t="refdomains">Ref. Dominios</button>
       <button data-t="linkpages">Pages by Links</button>
-      <button data-t="broken">Broken Pages</button>
+      <button data-t="broken">Páginas rotas</button>
     </div></div>
   <div class="tabgroup"><div class="tglbl">Organic search</div>
     <div class="tabs">
-      <button data-t="keywords">Keywords</button>
-      <button data-t="pages" class="on">Top Pages</button>
-      <button data-t="competitors">Competitors</button>
+      <button data-t="keywords">Palabra claves</button>
+      <button data-t="pages" class="on">Páginas principales</button>
+      <button data-t="competitors">Competidores</button>
       <button data-t="contentgap">Content Gap</button>
     </div></div>
   <div class="tabgroup"><div class="tglbl">Paid search</div>
-    <div class="tabs"><button data-t="paidkeywords">Paid Keywords</button></div></div>
+    <div class="tabs"><button data-t="paidkeywords">Paid Palabra claves</button></div></div>
   <div class="tabgroup"><div class="tglbl">Structure</div>
-    <div class="tabs"><button data-t="structure">Site Structure</button></div></div>
+    <div class="tabs"><button data-t="structure">Estructura del sitio</button></div></div>
 </div>
 <section class="card" id="rescard" style="display:none">
   <div class="resbar">
     <span class="cnt" id="rescnt"></span>
     <span class="cost" id="rescost"></span>
     <span class="chips2" id="subchips"></span>
-    <input type="search" id="q" placeholder="Filter rows...">
+    <input type="search" id="q" placeholder="Filtrar filas...">
     <button class="csv" id="csv">CSV</button>
   </div>
   <div class="scroll gscroll"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
@@ -124,17 +124,17 @@ _CONTENT = r"""<div class="panel">
 
 _JS = r"""var BRANDS = __BRANDS__;
 var COLS = {
-  pages: [["url","Page",0],["traffic","Traffic /mo",1],["keywords","Keywords",1],["top3","Top 3",1]],
-  keywords: [["kw","Keyword",0],["rank","Pos",1],["move","Change",0],["vol","Volume",1],["traffic","Traffic",1],["cpc","CPC",1],["url","URL",0]],
-  paidkeywords: [["kw","Keyword",0],["rank","Ad pos",1],["vol","Volume",1],["cpc","CPC",1],["url","Landing page",0]],
-  backlinks: [["url_from","Linking page",0],["anchor","Anchor",0],["domain_rank","Domain rank",1],["dofollow","Follow",0],["flag","Status",0],["spam","Spam",1],["first_seen","First seen",0]],
-  anchors: [["anchor","Anchor text",0],["ref_domains","Ref. domains",1],["backlinks","Backlinks",1],["spam","Spam",1],["first_seen","First seen",0]],
-  linkpages: [["url","Page",0],["ref_domains","Ref. domains",1],["backlinks","Backlinks",1],["rank","Page rank",1],["first_seen","First seen",0]],
-  broken: [["url","Broken page",0],["status","HTTP",1],["ref_domains","Ref. domains",1],["backlinks","Backlinks",1]],
-  refdomains: [["domain","Referring domain",0],["rank","Domain rank",1],["backlinks","Links to target",1],["first_seen","First seen",0]],
+  pages: [["url","Page",0],["traffic","Traffic /mo",1],["keywords","Palabra claves",1],["top3","Top 3",1]],
+  keywords: [["kw","Palabra clave",0],["rank","Pos",1],["move","Change",0],["vol","Volumen",1],["traffic","Traffic",1],["cpc","CPC",1],["url","URL",0]],
+  paidkeywords: [["kw","Palabra clave",0],["rank","Ad pos",1],["vol","Volumen",1],["cpc","CPC",1],["url","Landing page",0]],
+  backlinks: [["url_from","Linking page",0],["anchor","Anchor",0],["domain_rank","Dominio rank",1],["dofollow","Follow",0],["flag","Status",0],["spam","Spam",1],["first_seen","First seen",0]],
+  anchors: [["anchor","Anchor text",0],["ref_domains","Ref. domains",1],["backlinks","Enlaces entrantes",1],["spam","Spam",1],["first_seen","First seen",0]],
+  linkpages: [["url","Page",0],["ref_domains","Ref. domains",1],["backlinks","Enlaces entrantes",1],["rank","Page rank",1],["first_seen","First seen",0]],
+  broken: [["url","Broken page",0],["status","HTTP",1],["ref_domains","Ref. domains",1],["backlinks","Enlaces entrantes",1]],
+  refdomains: [["domain","Referring domain",0],["rank","Dominio rank",1],["backlinks","Links to target",1],["first_seen","First seen",0]],
   competitors: [["domain","Competing domain",0],["shared_kw","Shared keywords",1],["avg_pos","Their avg pos",1],["traffic","Their traffic",1],["keywords","Their keywords",1]],
-  contentgap: [["kw","Keyword they rank for",0],["their_rank","Their pos",1],["vol","Volume",1],["traffic","Their traffic",1],["cpc","CPC",1],["url","Their page",0]],
-  structure: [["path","Section",0],["pages","Pages",1],["traffic","Traffic /mo",1],["keywords","Keywords",1]]
+  contentgap: [["kw","Palabra clave they rank for",0],["their_rank","Their pos",1],["vol","Volumen",1],["traffic","Their traffic",1],["cpc","CPC",1],["url","Their page",0]],
+  structure: [["path","Section",0],["pages","Pages",1],["traffic","Traffic /mo",1],["keywords","Palabra claves",1]]
 };
 var state = { target:'', tab:'pages', rows:[], sortK:null, sortDir:-1, data:{}, sub:{keywords:'all', backlinks:'all', contentgap:''} };
 function el(id){return document.getElementById(id);}
@@ -153,13 +153,13 @@ el('runbtn').onclick=function(){
   var b=el('runbtn'); b.disabled=true; el('spin').style.display='inline-block';
   post({tab:'overview'}).then(function(d){
     b.disabled=false; el('spin').style.display='none';
-    if(!d.ok){ toast('Failed: '+(d.error||'unknown')); return; }
+    if(!d.ok){ toast('No se pudo completar: '+(d.error||'unknown')); return; }
     el('pagemode').style.display=d.isPage?'block':'none';
     renderOverview(d);
     el('tabs').style.display='flex';
     loadCharts();
     setTab('pages');
-  }).catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request failed — try again'); });
+  }).catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request no se pudo completar â€” inténtalo de nuevo'); });
 };
 el('dom').addEventListener('keydown',function(e){ if(e.key==='Enter') el('runbtn').click(); });
 
@@ -167,22 +167,22 @@ function renderOverview(d){
   var o=d.overview||{};
   var k=el('kpis'); k.style.display='grid';
   var cells=[
-    ['DR (Ahrefs)', o.dr!=null?o.dr:'—','gold'],
+    ['DR (Ahrefs)', o.dr!=null?o.dr:'â€”','gold'],
     ['Organic traffic /mo', fmt(o.traffic)],
     ['Traffic value /mo', '$'+fmt(o.traffic_value)],
     ['Ranking keywords', fmt(o.keywords)],
-    ['Page 1 rankings', fmt(o.page1)],
-    ['Backlinks', o.backlinks_error?'—':fmt(o.backlinks)],
-    ['Ref. domains', o.backlinks_error?'—':fmt(o.ref_domains)],
-    ['Broken pages', o.backlinks_error?'—':fmt(o.broken_pages)],
+    ['Primera página rankings', fmt(o.page1)],
+    ['Enlaces entrantes', o.backlinks_error?'â€”':fmt(o.backlinks)],
+    ['Ref. domains', o.backlinks_error?'â€”':fmt(o.ref_domains)],
+    ['Broken pages', o.backlinks_error?'â€”':fmt(o.broken_pages)],
     ['Paid traffic /mo', fmt(o.paid_traffic)],
-    ['Spam score', o.backlinks_error?'—':(o.spam_score||0)]
+    ['Spam score', o.backlinks_error?'â€”':(o.spam_score||0)]
   ];
   k.innerHTML=cells.map(function(c){
     return '<div class="kpi'+(c[2]?' '+c[2]:'')+'"><div class="kv">'+c[1]+'</div><div class="kl">'+c[0]+'</div></div>';
   }).join('');
-  if(o.balance!=null) el('hintline').textContent='DataForSEO balance: $'+o.balance.toFixed(2)+' · a full domain analysis (all tabs) ≈ $0.20 · results cache 24h so re-checks are free.';
-  if(o.backlinks_error) toast('Backlinks data: '+o.backlinks_error);
+  if(o.balance!=null) el('hintline').textContent='DataForSEO balance: $'+o.balance.toFixed(2)+' Â· a full domain analysis (all tabs) â‰ˆ $0.20 Â· results cache 24h so re-checks are free.';
+  if(o.backlinks_error) toast('Enlaces entrantes data: '+o.backlinks_error);
 }
 
 // ---- history charts (inline SVG, no libs) ----
@@ -205,13 +205,13 @@ function loadCharts(){
     var org=d.organic||[], lnk=d.links||[];
     if(org.length>1){
       var t=svgPath(org.map(function(r){return r.traffic;}),W,H,P);
-      html+=chartCard('Organic traffic','monthly est. visits · peak '+fmt(t.mx),
+      html+=chartCard('Organic traffic','monthly est. visits Â· peak '+fmt(t.mx),
         '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path d="'+t.area+'" fill="rgba(255,122,46,.14)"/><path d="'+t.line+'" fill="none" stroke="#ff7a2e" stroke-width="2"/></svg>',
-        '<span><i style="background:#ff7a2e"></i>'+org[0].ym+' → '+org[org.length-1].ym+'</span>');
+        '<span><i style="background:#ff7a2e"></i>'+org[0].ym+' â†’ '+org[org.length-1].ym+'</span>');
       var k1=svgPath(org.map(function(r){return r.top3;}),W,H,P);
       var k2=svgPath(org.map(function(r){return r.top3+r.pos4_10;}),W,H,P);
       var k3=svgPath(org.map(function(r){return r.top3+r.pos4_10+r.pos11_50;}),W,H,P);
-      html+=chartCard('Ranking keywords by position','top 3 / page 1 / top 50 · peak '+fmt(k3.mx),
+      html+=chartCard('Ranking keywords by position','top 3 / page 1 / top 50 Â· peak '+fmt(k3.mx),
         '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path d="'+k3.area+'" fill="rgba(106,176,255,.12)"/><path d="'+k2.area+'" fill="rgba(106,176,255,.2)"/><path d="'+k1.area+'" fill="rgba(57,217,138,.28)"/><path d="'+k3.line+'" fill="none" stroke="#6ab0ff" stroke-width="1.6"/></svg>',
         '<span><i style="background:rgba(57,217,138,.7)"></i>top 3</span><span><i style="background:rgba(106,176,255,.55)"></i>pos 4-10</span><span><i style="background:rgba(106,176,255,.25)"></i>pos 11-50</span>');
     }
@@ -225,7 +225,7 @@ function loadCharts(){
         return '<rect x="'+x.toFixed(1)+'" y="'+(H-P-hN).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+hN.toFixed(1)+'" fill="rgba(57,217,138,.5)"/>'
              + '<rect x="'+(x+w).toFixed(1)+'" y="'+(H-P-hL).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+hL.toFixed(1)+'" fill="rgba(255,92,92,.5)"/>';
       }).join('');
-      html+=chartCard('Referring domains + new/lost links','12 months · '+fmt(lnk[lnk.length-1].ref_domains)+' ref. domains now',
+      html+=chartCard('Referring domains + new/lost links','12 months Â· '+fmt(lnk[lnk.length-1].ref_domains)+' ref. domains now',
         '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+bars+'<path d="'+r1.line+'" fill="none" stroke="#ff7a2e" stroke-width="2"/></svg>',
         '<span><i style="background:#ff7a2e"></i>ref. domains</span><span><i style="background:rgba(57,217,138,.7)"></i>new links</span><span><i style="background:rgba(255,92,92,.7)"></i>lost links</span>');
     }
@@ -285,30 +285,30 @@ function loadTab(){
   }
   if(tab==='structure'){ loadStructure(); return; }
   if(state.data[id]){ renderRows(state.data[id]); return; }
-  el('rescnt').textContent='Loading...'; el('rescost').textContent='';
+  el('rescnt').textContent='Cargando...'; el('rescost').textContent='';
   el('thead').innerHTML=''; el('tbody').innerHTML='';
   var payload={tab:tab};
   if(tab==='backlinks') payload.mode=state.sub.backlinks;
   if(tab==='contentgap') payload.vs=state.sub.contentgap;
   post(payload).then(function(d){
-    if(!d.ok){ el('rescnt').textContent='Failed'; toast('Failed: '+(d.error||'unknown')); return; }
+    if(!d.ok){ el('rescnt').textContent='No se pudo completar'; toast('No se pudo completar: '+(d.error||'unknown')); return; }
     state.data[id]=d; if(state.tab===tab) renderRows(d);
-  }).catch(function(){ el('rescnt').textContent='Failed'; toast('Request failed'); });
+  }).catch(function(){ el('rescnt').textContent='No se pudo completar'; toast('Request no se pudo completar'); });
 }
 function loadStructure(){
   var pagesData=state.data['pages'];
   if(!pagesData){
-    el('rescnt').textContent='Loading...'; el('thead').innerHTML=''; el('tbody').innerHTML='';
+    el('rescnt').textContent='Cargando...'; el('thead').innerHTML=''; el('tbody').innerHTML='';
     post({tab:'pages'}).then(function(d){
-      if(!d.ok){ el('rescnt').textContent='Failed'; toast('Failed: '+(d.error||'unknown')); return; }
+      if(!d.ok){ el('rescnt').textContent='No se pudo completar'; toast('No se pudo completar: '+(d.error||'unknown')); return; }
       state.data['pages']=d; if(state.tab==='structure') loadStructure();
-    }).catch(function(){ el('rescnt').textContent='Failed'; });
+    }).catch(function(){ el('rescnt').textContent='No se pudo completar'; });
     return;
   }
   var agg={};
   (pagesData.rows||[]).forEach(function(r){
     var m=(r.url||'').match(/^https?:\/\/[^/]+(\/[^/]*)/);
-    var seg=m?(m[1].length>1?m[1]+(r.url.indexOf(m[1]+'/')>-1?'/…':''):'/'):'/';
+    var seg=m?(m[1].length>1?m[1]+(r.url.indexOf(m[1]+'/')>-1?'/â€¦':''):'/'):'/';
     var key=m&&m[1].length>1?m[1].replace(/\/$/,'')+'/':'/ (root pages)';
     (agg[key]=agg[key]||{path:key,pages:0,traffic:0,keywords:0});
     agg[key].pages++; agg[key].traffic+=r.traffic||0; agg[key].keywords+=r.keywords||0;
@@ -321,9 +321,9 @@ function renderRows(d){
   var cols=COLS[state.tab];
   state.rows=d.rows||[];
   el('rescard').style.display='';
-  el('rescnt').textContent=fmt(state.rows.length)+' rows · '+state.target;
-  el('rescost').textContent=d.structureNote?'computed free from Top Pages data'
-    :(d.cached?'cached (free)':'live pull $'+(d.cost||0).toFixed(4)+' · '+d.used+' pulls today');
+  el('rescnt').textContent=fmt(state.rows.length)+' rows Â· '+state.target;
+  el('rescost').textContent=d.structureNote?'computed free from Páginas principales data'
+    :(d.cached?'cached (free)':'live pull $'+(d.cost||0).toFixed(4)+' Â· '+d.used+' pulls today');
   el('thead').innerHTML='<tr>'+cols.map(function(c){
     return '<th data-k="'+c[0]+'"'+(c[2]?' style="text-align:right"':'')+'>'+c[1]+'</th>';
   }).join('')+'</tr>';
@@ -361,16 +361,16 @@ function drawBody(){
         return '<td class="kw"><a href="'+href.replace(/"/g,'&quot;')+'" target="_blank" rel="noopener">'+String(v).replace(/</g,'&lt;')+'</a></td>';
       }
       if(c[0]==='domain'&&v) return '<td class="kw"><a href="https://'+v+'" target="_blank" rel="noopener">'+v+'</a></td>';
-      if(c[0]==='status') return '<td class="num"><span class="pillb crit">'+(v||'—')+'</span></td>';
-      if(c[0]==='move') return '<td>'+(v?'<span class="mv '+v+'">'+v.toUpperCase()+(v!=='new'&&r.prev?' '+r.prev+'→'+r.rank:'')+'</span>':'')+'</td>';
+      if(c[0]==='status') return '<td class="num"><span class="pillb crit">'+(v||'â€”')+'</span></td>';
+      if(c[0]==='move') return '<td>'+(v?'<span class="mv '+v+'">'+v.toUpperCase()+(v!=='new'&&r.prev?' '+r.prev+'â†’'+r.rank:'')+'</span>':'')+'</td>';
       if(c[0]==='flag') return '<td>'+(v?'<span class="mv '+v+'">'+v.toUpperCase()+'</span>':'')+'</td>';
       if(c[0]==='dofollow') return '<td>'+(v?'<span class="dfl">follow</span>':'<span class="nfl">nofollow</span>')+'</td>';
-      if(c[0]==='rank'&&(state.tab==='keywords'||state.tab==='paidkeywords')) return '<td class="num">'+(v?'#'+v:'—')+'</td>';
-      if(c[0]==='their_rank') return '<td class="num">'+(v?'#'+v:'—')+'</td>';
-      if(c[0]==='cpc') return '<td class="num">'+(v?'$'+v.toFixed(2):'—')+'</td>';
-      if(c[0]==='avg_pos') return '<td class="num">'+(v||'—')+'</td>';
+      if(c[0]==='rank'&&(state.tab==='keywords'||state.tab==='paidkeywords')) return '<td class="num">'+(v?'#'+v:'â€”')+'</td>';
+      if(c[0]==='their_rank') return '<td class="num">'+(v?'#'+v:'â€”')+'</td>';
+      if(c[0]==='cpc') return '<td class="num">'+(v?'$'+v.toFixed(2):'â€”')+'</td>';
+      if(c[0]==='avg_pos') return '<td class="num">'+(v||'â€”')+'</td>';
       if(c[2]) return '<td class="num vol">'+fmt(v)+'</td>';
-      return '<td>'+String(v==null?'—':v).replace(/</g,'&lt;')+'</td>';
+      return '<td>'+String(v==null?'â€”':v).replace(/</g,'&lt;')+'</td>';
     }).join('')+'</tr>';
   }).join('');
 }
@@ -398,11 +398,11 @@ def render():
         title_html="Site <span>Explorer</span>",
         content=_CONTENT,
         updated=now,
-        right_meta="any domain · live DataForSEO · Ahrefs-grade",
+        right_meta="any domain Â· live DataForSEO Â· Ahrefs-grade",
         extra_css=EXTRA_CSS,
         body_end=body_end,
-        page_title="Site Explorer · " + config.brand_name())
-    OUT_HTML.write_text(html)
+        page_title="Explorador de sitios Â· " + config.brand_name())
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 

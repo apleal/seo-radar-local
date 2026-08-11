@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed the dashboard with realistic sample data — no API key needed.
+"""Seed the dashboard with realistic sample data â€” no API key needed.
 
     python demo.py && python worker.py serve
 
@@ -21,39 +21,39 @@ import config  # noqa: E402
 random.seed(42)
 
 BRANDS = {
-    "Acme Coffee": {
+    "Café Acme": {
         "domain": "acmecoffee.com", "gsc_site": "https://acmecoffee.com/", "geo": None,
-        "location_code": 2840, "language_code": "en",
-        "seed_keywords": ["specialty coffee beans", "single origin coffee"],
+        "location_code": 2724, "language_code": "es",
+        "seed_keywords": ["café de especialidad", "café de origen"],
         "brand_keywords": ["acme coffee"],
         "target_keywords": ["best coffee subscription", "fresh roasted coffee beans",
                             "single origin espresso", "light roast coffee online"],
     },
-    "BrightSmile Dental": {
+    "Clínica Dental Sonrisa": {
         "domain": "brightsmile.dental", "gsc_site": "https://brightsmile.dental/", "geo": None,
-        "location_code": 2840, "language_code": "en",
-        "seed_keywords": ["dentist near me", "teeth whitening"],
+        "location_code": 2724, "language_code": "es",
+        "seed_keywords": ["dentista cerca de mí", "blanqueamiento dental"],
         "brand_keywords": ["brightsmile dental"],
-        "local_keywords": ["dentist austin", "emergency dentist austin", "invisalign austin"],
-        "geogrid": {"center": [30.2672, -97.7431], "grid": 7, "spacing_miles": 2.5,
+        "local_keywords": ["dentist madrid", "emergency dentist madrid", "invisalign madrid"],
+        "geogrid": {"center": [40.4168, -3.7038], "grid": 7, "spacing_miles": 2.5,
                     "zoom": "13z", "keywords": ["dentist", "emergency dentist"]},
     },
 }
 
 KWS = {
-    "Acme Coffee": [
+    "Café Acme": [
         ("acme coffee", 1300, 1.1, 1, "ranked", 1), ("best coffee subscription", 9900, 4.2, 12, "ranked", 3),
         ("fresh roasted coffee beans", 4400, 2.8, 7, "ranked", 3), ("single origin espresso", 1900, 3.1, 15, "ranked", 3),
-        ("light roast coffee online", 880, 2.4, 22, "ranked", 3), ("specialty coffee beans", 8100, 3.6, 9, "ranked", 0),
+        ("light roast coffee online", 880, 2.4, 22, "ranked", 3), ("café de especialidad", 8100, 3.6, 9, "ranked", 0),
         ("coffee bean grinder guide", 2900, 1.9, 31, "research", 0), ("pour over coffee ratio", 6600, 0.9, None, "research", 0),
         ("how to store coffee beans", 3600, 1.2, 18, "gsc", 0), ("ethiopian yirgacheffe", 2400, 2.2, 11, "ranked", 0),
         ("cold brew concentrate", 5400, 3.4, 27, "research", 0), ("coffee subscription gift", 1600, 5.1, 14, "ranked", 0),
     ],
-    "BrightSmile Dental": [
-        ("brightsmile dental", 720, 2.3, 1, "ranked", 1), ("dentist austin", 12100, 12.5, 8, "ranked", 2),
-        ("emergency dentist austin", 2900, 18.2, 5, "ranked", 2), ("invisalign austin", 1900, 15.7, 11, "ranked", 2),
-        ("teeth whitening cost", 14800, 6.8, 24, "research", 0), ("dental implants austin", 1600, 22.4, 19, "ranked", 0),
-        ("pediatric dentist austin", 2400, 9.3, 16, "ranked", 0), ("root canal cost", 9900, 8.1, None, "research", 0),
+    "Clínica Dental Sonrisa": [
+        ("brightsmile dental", 720, 2.3, 1, "ranked", 1), ("dentist madrid", 12100, 12.5, 8, "ranked", 2),
+        ("emergency dentist madrid", 2900, 18.2, 5, "ranked", 2), ("invisalign madrid", 1900, 15.7, 11, "ranked", 2),
+        ("blanqueamiento dental cost", 14800, 6.8, 24, "research", 0), ("dental implants madrid", 1600, 22.4, 19, "ranked", 0),
+        ("pediatric dentist madrid", 2400, 9.3, 16, "ranked", 0), ("root canal cost", 9900, 8.1, None, "research", 0),
         ("veneers before and after", 8100, 4.4, 33, "research", 0), ("dentist open saturday", 4400, 7.7, 13, "gsc", 0),
     ],
 }
@@ -62,7 +62,7 @@ KWS = {
 def seed():
     force = "--force" in sys.argv
     if config.DB.exists() and not force:
-        raise SystemExit("data/ already has a database — pass --force to overwrite with demo data.")
+        raise SystemExit("data/ already has a database â€” pass --force to overwrite with demo data.")
     config.DATA.mkdir(exist_ok=True)
     config.KEYWORDS.write_text(json.dumps({"track_cap": 100, "brands": BRANDS}, indent=2))
 
@@ -94,7 +94,7 @@ def seed():
                              tier, cur + random.choice([-2, 0, 1]) if cur and tier == 3 else None,
                              random.choice([1, 2, 3]) if tier == 2 and cur and cur <= 10 else None))
 
-    gg = BRANDS["BrightSmile Dental"]["geogrid"]
+    gg = BRANDS["Clínica Dental Sonrisa"]["geogrid"]
     lat0, lng0 = gg["center"]
     comps = ["Downtown Dental Studio", "Lakeside Family Dentistry", "Capitol Smiles"]
     import math
@@ -109,15 +109,15 @@ def seed():
                     rank = None if dist > 2.8 and random.random() < .7 else max(1, int(dist * 1.6 + random.random() * 3))
                     top3 = [{"t": t, "r": i + 1} for i, t in enumerate(random.sample(comps, 2))]
                     if rank and rank <= 3:
-                        top3.insert(rank - 1, {"t": "BrightSmile Dental", "r": rank})
+                        top3.insert(rank - 1, {"t": "Clínica Dental Sonrisa", "r": rank})
                     con.execute("INSERT INTO geogrid VALUES (?,?,?,?,?,?,?)",
-                                (run, "BrightSmile Dental", kw, round(lat, 6), round(lng, 6), rank,
+                                (run, "Clínica Dental Sonrisa", kw, round(lat, 6), round(lng, 6), rank,
                                  json.dumps([{"t": x["t"], "r": i + 1} for i, x in enumerate(top3[:3])])))
     con.commit()
 
     now = runs[-1]
     (config.DATA / "competitors.json").write_text(json.dumps({"generated": now, "brands": {
-        "Acme Coffee": {"domain": "acmecoffee.com",
+        "Café Acme": {"domain": "acmecoffee.com",
             "competitors": [{"domain": "beanboxco.com", "common": 42, "their_kw": 8100, "etv": 12400},
                             {"domain": "roastcollective.com", "common": 31, "their_kw": 5600, "etv": 8900},
                             {"domain": "javapress.com", "common": 18, "their_kw": 2300, "etv": 3100}],
@@ -129,43 +129,43 @@ def seed():
                       "competitors": [{"domain": "beanboxco.com", "rank": 6, "url": "/blog/whole-vs-ground"}]},
                      {"keyword": "arabica vs robusta", "vol": 12100, "cpc": 0.8,
                       "competitors": [{"domain": "roastcollective.com", "rank": 3, "url": "/learn"}]}]},
-        "BrightSmile Dental": {"domain": "brightsmile.dental",
-            "competitors": [{"domain": "austindentalco.com", "common": 27, "their_kw": 1900, "etv": 5200}],
-            "picked": ["austindentalco.com"],
-            "gaps": [{"keyword": "same day crowns austin", "vol": 590, "cpc": 14.2,
-                      "competitors": [{"domain": "austindentalco.com", "rank": 5, "url": "/crowns"}]}]},
+        "Clínica Dental Sonrisa": {"domain": "brightsmile.dental",
+            "competitors": [{"domain": "madriddentalco.com", "common": 27, "their_kw": 1900, "etv": 5200}],
+            "picked": ["madriddentalco.com"],
+            "gaps": [{"keyword": "same day crowns madrid", "vol": 590, "cpc": 14.2,
+                      "competitors": [{"domain": "madriddentalco.com", "rank": 5, "url": "/crowns"}]}]},
     }}, indent=1))
 
     (config.DATA / "ai-visibility.json").write_text(json.dumps({"generated": now, "brands": {
-        "Acme Coffee": {"domain": "acmecoffee.com", "n_ai": 4, "n_cited": 1,
+        "Café Acme": {"domain": "acmecoffee.com", "n_ai": 4, "n_cited": 1,
             "top_cited": [["wikipedia.org", 3], ["seriouseats.com", 2], ["beanboxco.com", 2]],
-            "rows": [{"keyword": "specialty coffee beans", "has_ai": True, "cited": True,
+            "rows": [{"keyword": "café de especialidad", "has_ai": True, "cited": True,
                       "refs": ["acmecoffee.com", "wikipedia.org", "seriouseats.com"]},
-                     {"keyword": "single origin coffee", "has_ai": True, "cited": False,
+                     {"keyword": "café de origen", "has_ai": True, "cited": False,
                       "refs": ["wikipedia.org", "beanboxco.com"]},
                      {"keyword": "best coffee subscription", "has_ai": True, "cited": False,
                       "refs": ["seriouseats.com", "beanboxco.com"]},
                      {"keyword": "pour over coffee ratio", "has_ai": True, "cited": False,
                       "refs": ["wikipedia.org"]},
                      {"keyword": "cold brew concentrate", "has_ai": False, "cited": False, "refs": []}]},
-        "BrightSmile Dental": {"domain": "brightsmile.dental", "n_ai": 2, "n_cited": 0,
+        "Clínica Dental Sonrisa": {"domain": "brightsmile.dental", "n_ai": 2, "n_cited": 0,
             "top_cited": [["healthline.com", 2], ["webmd.com", 1]],
-            "rows": [{"keyword": "teeth whitening", "has_ai": True, "cited": False,
+            "rows": [{"keyword": "blanqueamiento dental", "has_ai": True, "cited": False,
                       "refs": ["healthline.com", "webmd.com"]},
-                     {"keyword": "dentist near me", "has_ai": False, "cited": False, "refs": []},
-                     {"keyword": "invisalign austin", "has_ai": True, "cited": False,
+                     {"keyword": "dentista cerca de mí", "has_ai": False, "cited": False, "refs": []},
+                     {"keyword": "invisalign madrid", "has_ai": True, "cited": False,
                       "refs": ["healthline.com"]}]},
     }}, indent=1))
 
     (config.DATA / "site-health.json").write_text(json.dumps({"generated": now, "brands": {
-        "Acme Coffee": {"domain": "acmecoffee.com", "source": "sitemap", "pages_crawled": 84,
+        "Café Acme": {"domain": "acmecoffee.com", "source": "sitemap", "pages_crawled": 84,
             "score": 91, "noalt_total": 6,
             "issue_counts": {"title_long": 12, "desc_missing": 3, "thin": 2},
             "issues": {"title_long": [{"url": "https://acmecoffee.com/blog/roast-guide", "title": ""}],
                        "desc_missing": [{"url": "https://acmecoffee.com/pages/wholesale", "title": ""}],
                        "thin": [{"url": "https://acmecoffee.com/tags/decaf", "title": ""}]},
             "broken_links": [{"url": "https://acmecoffee.com/old-menu", "status": 404}]},
-        "BrightSmile Dental": {"domain": "brightsmile.dental", "source": "crawl", "pages_crawled": 31,
+        "Clínica Dental Sonrisa": {"domain": "brightsmile.dental", "source": "crawl", "pages_crawled": 31,
             "score": 78, "noalt_total": 14,
             "issue_counts": {"h1_bad": 9, "canonical_missing": 5, "title_dup": 4},
             "issues": {"h1_bad": [{"url": "https://brightsmile.dental/services", "title": ""}],
@@ -175,20 +175,20 @@ def seed():
     }}, indent=1))
 
     (config.DATA / "link-gap.json").write_text(json.dumps({"generated": now, "brands": {
-        "Acme Coffee": {"domain": "acmecoffee.com", "keyword": "specialty coffee beans", "local": False,
+        "Café Acme": {"domain": "acmecoffee.com", "keyword": "café de especialidad", "local": False,
             "competitors": [{"domain": "beanboxco.com", "serp_rank": 3}, {"domain": "roastcollective.com", "serp_rank": 5}],
             "gaps": [{"ref": "coffeereview.com", "rank": 2400, "spam": 4, "links_to": ["beanboxco.com", "roastcollective.com"],
-                      "title": "Coffee Review — the world's leading coffee guide",
-                      "category": "Roundup / resource", "angle": "Submit your beans for review — lead with a unique origin story.", "difficulty": "Medium"},
+                      "title": "Coffee Review â€” the world's leading coffee guide",
+                      "category": "Roundup / resource", "angle": "Submit your beans for review â€” lead with a unique origin story.", "difficulty": "Medium"},
                      {"ref": "sprudge.com", "rank": 5100, "spam": 6, "links_to": ["beanboxco.com"],
-                      "title": "Sprudge — coffee news and culture",
+                      "title": "Sprudge â€” coffee news and culture",
                       "category": "News / media", "angle": "Digital-PR pitch with a data hook or expert quote.", "difficulty": "Hard"},
                      {"ref": "bestcoffeesubscriptions.net", "rank": 890, "spam": 11, "links_to": ["beanboxco.com", "roastcollective.com"],
-                      "title": "Best Coffee Subscriptions — 2026 rankings",
+                      "title": "Best Coffee Subscriptions â€” 2026 rankings",
                       "category": "Directory / listing", "angle": "Submit your listing (many free). Highest-certainty link.", "difficulty": "Easy"}]},
     }}, indent=1))
     con.close()
-    print("✓ demo data seeded — now run:  python worker.py serve")
+    print("âœ“ demo data seeded â€” now run:  python worker.py serve")
 
 
 if __name__ == "__main__":

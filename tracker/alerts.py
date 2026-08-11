@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rank-change alerts (PRT-style notifications) — Telegram digest after each
+"""Rank-change alerts (PRT-style notifications) â€” Telegram digest after each
 daily tracking run. Compares the two latest runs in ranks.db and reports:
   - keywords that ENTERED or LEFT page 1
   - moves of 5+ positions (volume >= 100, or any pinned brand/local/target term)
@@ -11,7 +11,7 @@ import config
 
 _tg = config.telegram()
 if not _tg:
-    raise SystemExit(0)  # Telegram alerts not configured — skip silently
+    raise SystemExit(0)  # Telegram alerts not configured â€” skip silently
 TOK, CHAT = _tg["token"], _tg["chat_id"]
 DB = config.DB
 
@@ -30,22 +30,22 @@ lines = []
 for (b, k), (r, vol, ib) in sorted(cur.items()):
     p = old.get((b, k))
     if r and (p is None or not p) and r <= 10:
-        lines.append(f"🟢 {b}: “{k}” entered page 1 → #{r}")
+        lines.append(f"ðŸŸ¢ {b}: â€œ{k}â€ entered page 1 â†’ #{r}")
     elif p and p <= 10 and (not r or r > 10):
-        lines.append(f"🔴 {b}: “{k}” dropped off page 1 (#{p} → {'#'+str(r) if r else 'gone'})")
+        lines.append(f"ðŸ”´ {b}: â€œ{k}â€ dropped off page 1 (#{p} â†’ {'#'+str(r) if r else 'gone'})")
     elif r and p and abs(p - r) >= 5 and (vol >= 100 or ib):
-        arrow = "📈" if r < p else "📉"
-        lines.append(f"{arrow} {b}: “{k}” #{p} → #{r} (vol {vol:,})")
+        arrow = "ðŸ“ˆ" if r < p else "ðŸ“‰"
+        lines.append(f"{arrow} {b}: â€œ{k}â€ #{p} â†’ #{r} (vol {vol:,})")
     elif ib == 1 and r != p and (r or p):
-        lines.append(f"🏷 {b} brand term: “{k}” {'#'+str(p) if p else '—'} → {'#'+str(r) if r else '—'}")
+        lines.append(f"ðŸ· {b} brand term: â€œ{k}â€ {'#'+str(p) if p else 'â€”'} â†’ {'#'+str(r) if r else 'â€”'}")
 
 if not lines:
     raise SystemExit(0)
 MAX = 25
 shown = lines[:MAX]
 if len(lines) > MAX:
-    shown.append(f"…and {len(lines) - MAX} more (see dashboard)")
-msg = (f"📊 Rank Tracker — changes ({latest} vs {prev})\n\n" + "\n".join(shown)
+    shown.append(f"â€¦and {len(lines) - MAX} more (see dashboard)")
+msg = (f"ðŸ“Š Rank Tracker â€” changes ({latest} vs {prev})\n\n" + "\n".join(shown)
        + ("\n\n" + config.env("DASHBOARD_URL") if config.env("DASHBOARD_URL") else ""))
 data = urllib.parse.urlencode({"chat_id": CHAT, "text": msg, "disable_web_page_preview": "true"}).encode()
 urllib.request.urlopen(f"https://api.telegram.org/bot{TOK}/sendMessage", data, timeout=30)

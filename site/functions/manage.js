@@ -1,4 +1,4 @@
-// Keyword/URL management queue. Auth enforced by _middleware.js.
+// Palabra clave/URL management queue. Auth enforced by _middleware.js.
 // Ops are queued in KV; the Mini poller applies them to keywords.json,
 // re-tracks, and redeploys within ~2-5 minutes.
 const ACTIONS = ["add_keywords", "remove_keyword", "add_domain", "remove_domain",
@@ -10,7 +10,7 @@ export async function onRequestPost(context) {
   try {
     body = await context.request.json();
   } catch {
-    return json({ ok: false, error: "invalid JSON" }, 400);
+    return json({ ok: false, error: "JSON no válido" }, 400);
   }
   const action = body.action || "";
   if (!ACTIONS.includes(action)) return json({ ok: false, error: "unknown action" }, 400);
@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: "brand + keyword required" }, 400);
   if (action === "add_domain") {
     const dom = (body.domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return json({ ok: false, error: "invalid domain" }, 400);
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)) return json({ ok: false, error: "dominio no válido" }, 400);
     if (!body.name) return json({ ok: false, error: "name required" }, 400);
     body.domain = dom;
   }

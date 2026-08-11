@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SEO Command Center — guided setup. Run: python setup.py
+"""SEO Radar Local â€” configuración guiada. Run: python setup.py
 
 Walks you through everything, validates your DataForSEO credentials with a
 free API call, and writes .env + data/keywords.json. Re-run any time; it
@@ -22,7 +22,7 @@ COUNTRIES = {
     "us": (2840, "en", "United States"), "uk": (2826, "en", "United Kingdom"),
     "gb": (2826, "en", "United Kingdom"), "ca": (2124, "en", "Canada"),
     "au": (2036, "en", "Australia"), "de": (2276, "de", "Germany"),
-    "fr": (2250, "fr", "France"), "es": (2724, "es", "Spain"),
+    "fr": (2250, "fr", "France"), "es": (2724, "es", "España"),
     "it": (2380, "it", "Italy"), "nl": (2528, "nl", "Netherlands"),
     "br": (2076, "pt", "Brazil"), "mx": (2484, "es", "Mexico"),
     "co": (2170, "es", "Colombia"), "ar": (2032, "es", "Argentina"),
@@ -36,12 +36,12 @@ def ask(prompt, default=None, required=True, secret=False):
         try:
             v = (getpass.getpass(f"{prompt}{sfx}: ") if secret else input(f"{prompt}{sfx}: ")).strip()
         except (EOFError, KeyboardInterrupt):
-            raise SystemExit("\nSetup aborted — nothing was written. Run `python setup.py` again any time.")
+            raise SystemExit("\nConfiguración cancelada â€” nothing was written. Run `python setup.py` again any time.")
         if not v and default is not None:
             return default
         if v or not required:
             return v
-        print("  (required)")
+        print("  (obligatorio)")
 
 
 def yes(prompt, default=False):
@@ -51,7 +51,7 @@ def yes(prompt, default=False):
 
 
 def validate_dfs(login, password):
-    """Free call — confirms the credentials work and shows remaining balance."""
+    """Free call â€” confirms the credentials work and shows remaining balance."""
     auth = "Basic " + base64.b64encode(f"{login}:{password}".encode()).decode()
     req = urllib.request.Request("https://api.dataforseo.com/v3/appendix/user_data",
                                  headers={"Authorization": auth})
@@ -60,55 +60,55 @@ def validate_dfs(login, password):
             d = json.load(r)
         money = ((d["tasks"][0]["result"] or [{}])[0].get("money") or {})
         bal = money.get("balance")
-        print(f"  ✓ credentials valid" + (f" — balance ${bal:,.2f}" if bal is not None else ""))
+        print(f"  âœ“ credenciales válidas" + (f" â€” balance ${bal:,.2f}" if bal is not None else ""))
         return True
     except urllib.error.HTTPError as e:
-        print(f"  ✗ DataForSEO rejected those credentials (HTTP {e.code}). "
+        print(f"  âœ— DataForSEO rejected those credentials (HTTP {e.code}). "
               "Use the API login + API password from https://app.dataforseo.com/api-access")
         return False
     except Exception as e:
-        print(f"  ✗ could not reach DataForSEO: {e}")
+        print(f"  âœ— no se pudo conectar con DataForSEO: {e}")
         return False
 
 
 def main():
-    print("\n━━━ SEO Command Center · setup ━━━\n")
+    print("\nâ”â”â” SEO Radar Local Â· setup â”â”â”\n")
     env = {}
 
     # 1. branding + access key
-    brand = ask("Name shown in the dashboard header (enter = keep the Tested Media logo)", "Tested Media")
-    if brand != "Tested Media":
+    brand = ask("Nombre mostrado en la cabecera (Intro = conservar SEO Radar Local)", "SEO Radar Local")
+    if brand != "SEO Radar Local":
         env["BRAND_NAME"] = brand
-    print("\nThe access key is the password for your dashboard's login page.")
-    env["ACCESS_KEY"] = ask("Access key", secrets.token_urlsafe(12))
+    print("\nLa clave de acceso protege la pantalla de inicio de sesión.")
+    env["ACCESS_KEY"] = ask("Clave de acceso", secrets.token_urlsafe(12))
     env["AUTH_SALT"] = secrets.token_hex(8)
 
     # 2. DataForSEO (the only hard requirement)
-    print("\nDataForSEO powers rankings, research, competitors and map grids.")
-    print("Sign up (pay-as-you-go, ~$0.60/week for 500 keywords): https://dataforseo.com/?aff=254685")
+    print("\nDataForSEO proporciona posiciones, palabras clave, competidores y mapas.")
+    print("Crea una cuenta de pago por uso (el coste depende de las consultas): https://dataforseo.com/")
     while True:
-        login = ask("DataForSEO API login (usually your email)")
-        password = ask("DataForSEO API password", secret=True)
+        login = ask("Usuario API de DataForSEO (normalmente tu correo)")
+        password = ask("Contraseña API de DataForSEO", secret=True)
         if validate_dfs(login, password):
             break
-        print("  Let's try again.\n")
+        print("  Vamos a intentarlo de nuevo.\n")
     env["DATAFORSEO_LOGIN"] = login
     env["DATAFORSEO_PASSWORD"] = password
 
     # 3. sites
     sites = {}
-    if KEYWORDS.exists() and not yes("\ndata/keywords.json already exists — replace it?", False):
+    if KEYWORDS.exists() and not yes("\ndata/keywords.json ya existe. ¿Quieres sustituirlo?", False):
         sites = None
     if sites is not None:
-        print("\nAdd the site(s) you want to track. You can add more later from the dashboard.")
+        print("\nAñade las webs que quieras monitorizar. Podrás añadir más después.")
         while True:
-            name = ask("\nSite name (e.g. Acme Coffee)")
-            domain = ask("Domain (e.g. acmecoffee.com)").lower()
+            name = ask("\nNombre de la web (p. ej., Cafetería Acme)")
+            domain = ask("Dominio (p. ej., ejemplo.es)").lower()
             domain = re.sub(r"^https?://", "", domain).strip("/").replace("www.", "")
-            cc = ask("Country code (us, uk, ca, au, de, fr, es, co, …)", "us").lower()
-            loc, lang, label = COUNTRIES.get(cc, COUNTRIES["us"])
-            print(f"  → Google {label}, language '{lang}'")
-            seeds = ask("Seed keywords for research, comma-separated (e.g. specialty coffee beans)", required=False)
+            cc = ask("Código de país (es, us, uk, ca, de, fr, etc.)", "es").lower()
+            loc, lang, label = COUNTRIES.get(cc, COUNTRIES["es"])
+            print(f"  â†’ Google {label}, language '{lang}'")
+            seeds = ask("Palabras clave semilla, separadas por comas (p. ej., posicionamiento local)", required=False)
             entry = {
                 "domain": domain,
                 "gsc_site": f"https://{domain}/",
@@ -119,45 +119,45 @@ def main():
                 "brand_keywords": [name.lower()],
             }
             sites[name] = entry
-            if not yes("Add another site?", False):
+            if not yes("¿Añadir otra web?", False):
                 break
 
     # 4. optional: hosted mode
-    print("\nHosted mode puts the dashboard on Cloudflare Pages (free tier) and unlocks")
-    print("the in-browser buttons: refresh, add keywords, live research, grid setup.")
-    if yes("Configure Cloudflare hosting now?", False):
-        print("You need: an account ID (dash.cloudflare.com → any site → right sidebar)")
-        print("and an API token with 'Cloudflare Pages: Edit' + 'Workers KV Storage: Edit'")
-        print("(dash.cloudflare.com/profile/api-tokens → Create Token).")
-        env["CF_ACCOUNT_ID"] = ask("Cloudflare account ID")
-        env["CF_API_TOKEN"] = ask("Cloudflare API token", secret=True)
-        env["CF_PAGES_PROJECT"] = ask("Pages project name", "seo-command-center")
+    print("\nEl modo alojado publica el panel en Cloudflare Pages y activa")
+    print("los botones de actualización, gestión, investigación y mapas.")
+    if yes("¿Configurar Cloudflare ahora?", False):
+        print("Necesitas el ID de la cuenta (dash.cloudflare.com â†’ any site â†’ barra lateral derecha)")
+        print("y un token API con permisos de edición para Pages y Workers KV")
+        print("(dash.cloudflare.com/profile/api-tokens â†’ Crear token).")
+        env["CF_ACCOUNT_ID"] = ask("ID de cuenta de Cloudflare")
+        env["CF_API_TOKEN"] = ask("Token API de Cloudflare", secret=True)
+        env["CF_PAGES_PROJECT"] = ask("Nombre del proyecto Pages", "seo-radar-local")
 
     # 5. optional: Telegram alerts
-    if yes("\nSet up Telegram rank-change alerts?", False):
-        print("Create a bot with @BotFather, then message it once and grab your chat id")
+    if yes("\n¿Configurar alertas de cambios por Telegram?", False):
+        print("Crea un bot con @BotFather, envíale un mensaje y obtén el ID del chat")
         print("from https://api.telegram.org/bot<TOKEN>/getUpdates")
-        env["TELEGRAM_BOT_TOKEN"] = ask("Bot token", secret=True)
-        env["TELEGRAM_CHAT_ID"] = ask("Chat ID")
+        env["TELEGRAM_BOT_TOKEN"] = ask("Token del bot", secret=True)
+        env["TELEGRAM_CHAT_ID"] = ask("ID del chat")
 
     # write
     lines = [f"{k}={v}" for k, v in env.items()]
-    ENV.write_text("# SEO Command Center — generated by setup.py (never commit this file)\n"
+    ENV.write_text("# SEO Radar Local â€” generated by setup.py (never commit this file)\n"
                    + "\n".join(lines) + "\n")
-    print(f"\n✓ wrote .env")
+    print(f"\nâœ“ creado .env")
     if sites is not None:
         KEYWORDS.parent.mkdir(exist_ok=True)
         KEYWORDS.write_text(json.dumps({"track_cap": 100, "brands": sites}, indent=2))
-        print(f"✓ wrote data/keywords.json ({len(sites)} site{'s' if len(sites) != 1 else ''})")
+        print(f"âœ“ creado data/keywords.json ({len(sites)} site{'s' if len(sites) != 1 else ''})")
 
-    print("\n━━━ next steps ━━━")
-    print("1. python worker.py run all      # first data pull (~$0.10-0.50 depending on sites)")
+    print("\nâ”â”â” siguientes pasos â”â”â”")
+    print("1. python worker.py run all      # primera obtención de datos (~$0.10-0.50 depending on sites)")
     print("2. python worker.py serve        # open http://localhost:8000")
     if env.get("CF_ACCOUNT_ID"):
-        print("3. python worker.py deploy-config && python worker.py deploy   # go live")
-        print("4. python worker.py loop       # keep it fresh + power the dashboard buttons")
+        print("3. python worker.py deploy-config && python worker.py deploy   # publicar")
+        print("4. python worker.py loop       # mantén los datos al día y atiende los botones")
     else:
-        print("   (later: re-run setup to add Cloudflare hosting for the in-browser buttons)")
+        print("   (más adelante, vuelve a ejecutar setup para configurar Cloudflare)")
     print()
 
 

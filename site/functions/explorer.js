@@ -1,4 +1,4 @@
-// Site Explorer proxy — Ahrefs-style domain/page analysis from the edge via DataForSEO.
+// Explorador de sitios proxy â€” Ahrefs-style domain/page analysis from the edge via DataForSEO.
 // Auth enforced by _middleware.js (cookie gate). Creds = DFS_LOGIN/DFS_PASSWORD Pages secrets.
 //
 // Tabs (each is one POST {target, tab, ...}):
@@ -16,11 +16,11 @@
 //   competitors  labs competitors_domain                                         ~$0.02
 //   contentgap   labs domain_intersection target vs brand (they rank, brand not) ~$0.02
 //
-// Target may be a bare domain OR a full page URL (Page Inspect mode) — backlinks
+// Target may be a bare domain OR a full page URL (Page Inspect mode) â€” backlinks
 // endpoints take either; Labs endpoints get the domain part when given a URL.
 // Results cache in KV for 24h per target+tab+params (cache hits are free).
-// LIVE pulls capped at DAILY_LIMIT/day across all tabs — a runaway backstop, not
-// a budget (a full 11-tab domain analysis ≈ $0.20; 1,000 pulls ≈ $20 worst case).
+// LIVE pulls capped at DAILY_LIMIT/day across all tabs â€” a runaway backstop, not
+// a budget (a full 11-tab domain analysis â‰ˆ $0.20; 1,000 pulls â‰ˆ $20 worst case).
 const DAILY_LIMIT = 1000;
 const CACHE_TTL = 86400;
 const LABS = "https://api.dataforseo.com/v3/dataforseo_labs/google";
@@ -29,16 +29,16 @@ const BL = "https://api.dataforseo.com/v3/backlinks";
 export async function onRequestPost(context) {
   const login = context.env.DFS_LOGIN, pass = context.env.DFS_PASSWORD;
   if (!login || !pass)
-    return json({ ok: false, error: "DataForSEO credentials not configured on the server" }, 500);
+    return json({ ok: false, error: "Las credenciales de DataForSEO no están configuradas en el servidor" }, 500);
 
   let body;
   try { body = await context.request.json(); }
-  catch { return json({ ok: false, error: "invalid JSON" }, 400); }
+  catch { return json({ ok: false, error: "JSON no válido" }, 400); }
 
   const raw = String(body.target || "").toLowerCase()
     .replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[#?].*$/, "");
   if (!/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/.test(raw))
-    return json({ ok: false, error: "invalid domain or URL" }, 400);
+    return json({ ok: false, error: "dominio no válido or URL" }, 400);
   const isPage = raw.replace(/\/+$/, "").includes("/");
   const domain = raw.split("/")[0];
   const target = isPage ? "https://" + raw : domain; // backlinks API wants full URL for pages
