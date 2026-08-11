@@ -1,187 +1,127 @@
-<div align="center">
+# SEO Radar Local
 
-<img src="docs/screenshots/login.png" alt="SEO Command Center login" width="820">
+SEO Radar Local es una plataforma SEO autohospedada para consultar posiciones, investigar palabras clave, analizar competidores, revisar visibilidad en IA, salud técnica, oportunidades de enlaces y mapas de visibilidad local. Esta adaptación está orientada a Google España y al castellano.
 
-# SEO Command Center
+Es un fork de [SEO Command Center](https://github.com/testedmedia/seo-command-center). Conserva su arquitectura ligera basada en la biblioteca estándar de Python, SQLite y páginas HTML estáticas. No es un producto oficial de Google y los rankings son observaciones de resultados, no una garantía de exactitud absoluta.
 
-**A self-hosted SEO platform that costs ~$4/month instead of $139/month.**
+## Funciones principales
 
-Rank tracking · keyword research · competitor gaps · AI Overview visibility · site audits · link gaps · local map-pack grids
+- Posiciones orgánicas, históricos y exportación CSV.
+- Palabras clave y análisis de competidores.
+- Explorador de sitios, visibilidad en IA y salud SEO.
+- Oportunidades de enlaces y mapa de visibilidad local.
+- Datos bajo tu control en `data/ranks.db` y ficheros auxiliares de `data/`.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
-[![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)](#)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff7a2e.svg)](#contributing)
-[![GitHub stars](https://img.shields.io/github/stars/testedmedia/seo-command-center?style=social)](https://github.com/testedmedia/seo-command-center/stargazers)
+## Requisitos
 
-<img src="docs/demo.gif" alt="SEO Command Center demo" width="900">
+- Python 3.12 recomendado, o Docker.
+- Cuenta de DataForSEO para obtener datos reales. El coste depende del número y la frecuencia de consultas; consulta siempre sus precios actuales.
+- Google Search Console es opcional y se puede conectar más adelante.
+- Cloudflare es opcional y solo se necesita actualmente para las acciones interactivas descritas más abajo.
 
-</div>
+## Demostración sin API
 
-## Why
+No hace llamadas de pago:
 
-SEO tools charge subscription prices for data they buy wholesale. Under the hood they're calling the same SERP APIs you can call yourself.
+```bash
+python3 demo.py
+python3 worker.py serve
+```
 
-SEO Command Center is the whole dashboard, self-hosted, on top of [DataForSEO](https://dataforseo.com/?aff=254685)'s pay-as-you-go API. No subscription, no seat pricing, no keyword caps — you pay cents for the exact SERPs you pull:
+Abre `http://localhost:8000`. `demo.py` no sobrescribe una base existente salvo que se indique `--force`.
 
-| | SEO Command Center | [Semrush Pro](https://www.semrush.com/pricing/) | [Ahrefs Lite](https://ahrefs.com/pricing) | [Local Falcon](https://www.localfalcon.com/pricing) |
-|---|---|---|---|---|
-| Monthly cost | **pay-as-you-go (~$4/mo typical\*)** | $139.95/mo | $129/mo | from $24.99/mo |
-| Commitment | none — prepaid API credits | subscription | subscription | subscription |
-| Rank tracking, research, competitor gap, site audit, AI Overview tracking, local grids | all included | partial | partial | grids only |
-| Your data, on your server | yes — one SQLite file | no | no | no |
+## Instalación local
 
-\* Measured on a real deployment: 570 keywords across 5 sites updated daily, plus weekly local map grids and brand-SERP checks — **$3.55/month** in API costs. A 7×7 map-grid scan is $0.29; a keyword-research pull is ~$0.02.
+```bash
+git clone https://github.com/apleal/seo-radar-local.git
+cd seo-radar-local
+python3 setup.py
+python3 worker.py run all
+python3 worker.py serve
+```
 
-## What you get
+`setup.py` crea `.env` y `data/keywords.json`. España (`es`, location code `2724`, idioma `es`) es la opción predeterminada, aunque se conservan otros países. La primera actualización usa DataForSEO y puede generar costes.
 
-Eight pages, one dark command center, everything driven from the browser:
+## Docker
 
-| Page | What it does |
+```bash
+docker build -t seo-radar-local .
+docker run --rm -p 8000:8000 -v seo-radar-data:/app/data seo-radar-local
+```
+
+Para una prueba local también puedes usar `docker compose up --build`. El contenedor usa Python 3.12, un usuario sin privilegios, escucha en `0.0.0.0` y expone `/health` sin consultar APIs externas.
+
+## Despliegue en Easypanel
+
+Configura el servicio con estos valores:
+
+- Tipo de servicio: App.
+- Fuente: GitHub.
+- Repositorio: `apleal/seo-radar-local`.
+- Rama: `main` después de fusionar el PR.
+- Build path: `/`.
+- Builder: Dockerfile.
+- Dockerfile path: `Dockerfile`.
+- Puerto interno: `8000`.
+- Volumen persistente: `/app/data`.
+- Dominio: configurado desde Easypanel.
+- HTTPS: gestionado por Easypanel.
+
+En el primer arranque el volumen puede estar vacío: el servidor mostrará una explicación en vez de bloquearse. Abre la terminal del servicio en Easypanel y ejecuta:
+
+```bash
+python setup.py
+python worker.py run all
+```
+
+Después reinicia el servicio o ejecuta `python worker.py render`. Protege el dominio con autenticación en Easypanel o en otro proxy de confianza: el servidor Python está pensado para un panel interno detrás del proxy, no para exposición pública sin autenticación.
+
+## Variables de entorno
+
+| Variable | Uso |
 |---|---|
-| **Rankings** | Daily positions, 1d/7d/30d deltas, best-ever, sparklines, history charts, visibility score, GSC impressions/clicks, mobile ranks, CSV export |
-| **Research** | Live keyword ideas from seeds or any competitor's domain — volume, CPC, competition — checkbox → tracked |
-| **Site Explorer** | Ahrefs-style analysis of ANY domain or single URL: DR, traffic + traffic value, history charts, backlinks (dofollow/new/broken), anchors, referring domains, best-by-links, broken-page link opportunities, competitors, content gap vs your brands, paid keywords, site structure. A full all-tabs run costs about $0.20 in DataForSEO credits; results cache 24h so re-checks are free |
-| **Competitors** | Who actually outranks you + every keyword they rank for that you don't |
-| **AI Visibility** | Which of your keywords trigger Google AI Overviews, whether you're cited, and who is |
-| **Site Health** | Zero-cost technical crawler: broken links, duplicate titles, missing metas, thin content, per-site score |
-| **Link Gap** | Domains linking to your rivals but not you, junk-filtered and classified by how to actually get the link |
-| **Map Grid** | LocalFalcon-style GPS grid: your Google map-pack rank from 49+ points around your city, who holds the top 3 at every pin, per-keyword history charts and run-over-run improvement deltas |
+| `DATAFORSEO_LOGIN` | Usuario API de DataForSEO para datos reales |
+| `DATAFORSEO_PASSWORD` | Contraseña API de DataForSEO |
+| `ACCESS_KEY` | Clave del login en Cloudflare Pages |
+| `AUTH_SALT` | Sal aleatoria del login de Cloudflare |
+| `BRAND_NAME` | Marca visible; por defecto SEO Radar Local |
+| `LOGO_FILE` | Ruta opcional a un SVG propio |
+| `PORT` | Puerto interno; por defecto 8000 |
+| `DAILY_REFRESH_HOUR` | Hora local de actualización; por defecto 6 |
+| `GSC_CLIENT_SECRET` | Ruta al secreto OAuth opcional |
+| `GSC_TOKENS` | Ruta a los tokens OAuth opcionales |
+| `TELEGRAM_BOT_TOKEN` | Token opcional para alertas |
+| `TELEGRAM_CHAT_ID` | Chat opcional para alertas |
 
-<div align="center">
-<img src="docs/screenshots/rankings.png" alt="Rankings dashboard" width="900">
-<br><br>
-<img src="docs/screenshots/map-grid.png" alt="Local map grid" width="900">
-<br><br>
-<img src="docs/screenshots/research.png" alt="Keyword research" width="900">
-</div>
+Añade los secretos como variables protegidas de Easypanel. No los escribas en la imagen, el repositorio ni el HTML.
 
-More screenshots in [docs/screenshots](docs/screenshots).
+## Persistencia y copias de seguridad
 
-## Quickstart
+Crea siempre un volumen en `/app/data`; contiene SQLite, configuración, cachés, cuadrículas, resultados e informes persistentes. Crea `/app/credentials` solamente al conectar Search Console o montar un logotipo privado. Haz copias periódicas del volumen con el servicio detenido o mediante una copia coherente de SQLite, y prueba la restauración.
 
-**Try it with sample data first (no account needed):**
+## Cloudflare y modo de lectura
 
-```bash
-git clone https://github.com/testedmedia/seo-command-center.git
-cd seo-command-center
-python3 demo.py && python3 worker.py serve
-# → http://localhost:8000
+El despliegue directo en Easypanel sirve correctamente todas las páginas en modo lectura. Los botones de actualizar, añadir/eliminar webs o palabras clave, investigación en vivo y configuración de mapas dependen actualmente de `site/functions`, Cloudflare Pages, KV y el proceso `worker.py loop`. Esas funciones se conservan, pero no se han reconstruido como backend Python. No configures tokens de Cloudflare si solo necesitas lectura.
+
+## Search Console
+
+Cuando quieras activarlo, monta `/app/credentials` y define:
+
+```dotenv
+GSC_CLIENT_SECRET=/app/credentials/gsc-client-secret.json
+GSC_TOKENS=/app/credentials/gsc-tokens.json
 ```
 
-**Track your own site:**
+No publiques esos ficheros.
 
-```bash
-python3 setup.py            # guided: DataForSEO creds (validated live), your sites, options
-python3 worker.py run all   # first pull — typically $0.10-0.50
-python3 worker.py serve     # local dashboard
-```
+## Actualizaciones y proyecto original
 
-That's it. Python 3.9+ standard library only — no pip install, no Docker, no database server (SQLite file).
+Para incorporar cambios del proyecto original, añade un remoto `upstream`, revisa los cambios en una rama separada y resuelve con cuidado las diferencias de idioma, Docker y rutas persistentes antes de fusionar. Conserva la licencia y prueba `demo.py`, el render y el servidor después de cada actualización.
 
-### What you need
+## Licencia
 
-| Requirement | For | Cost |
-|---|---|---|
-| Python 3.9+ | everything | free |
-| [DataForSEO account](https://dataforseo.com/?aff=254685) | rankings, research, competitors, map grids | pay-as-you-go, ~$4/mo typical usage (prepaid credits last months) |
-| Cloudflare account (optional) | hosted dashboard + in-browser buttons | free tier |
-| Google Search Console (optional) | impressions/clicks + found keywords | free |
-| Node.js (optional) | only for `worker.py deploy` (wrangler) | free |
+MIT. Consulta [LICENSE](LICENSE). Esta adaptación mantiene los avisos del proyecto original.
 
-## Hosted mode
+## Aviso de costes
 
-Local mode is read-only pages. Hosted mode (free Cloudflare Pages) unlocks the buttons: refresh any report, add keywords/sites, delete keywords, live research, and map-grid setup from the browser — protected by a login page (orange matrix included).
-
-```bash
-python3 worker.py deploy-config   # creates the Pages project + queue, pushes your secrets
-python3 worker.py deploy          # ship the dashboard
-python3 worker.py loop            # poll the queue + daily auto-refresh (cron/systemd/launchd)
-```
-
-Buttons queue work into Cloudflare KV; `worker.py loop` on any machine (a laptop, a $4 VPS, a Raspberry Pi) picks jobs up within 2 minutes, runs them, and redeploys. Your API credentials only ever live in your `.env` and as encrypted Pages secrets.
-
-## Connect Search Console (optional)
-
-1. Create an OAuth client (Desktop) in [Google Cloud Console](https://console.cloud.google.com/apis/credentials), enable the Search Console API.
-2. Save the client JSON to `credentials/gsc-client-secret.json`.
-3. Run any OAuth helper to get a refresh token into `credentials/gsc-tokens.json` (`{"refresh_token": "..."}`).
-4. That's it — rankings runs will merge impressions, clicks and Google-reported positions, and auto-discover keywords you already get traffic for.
-
-## How it works
-
-```
-┌────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│  DataForSEO API    │ ←── │  tracker/*.py        │ ──→ │  data/ranks.db      │
-│  (SERPs, keywords, │     │  stdlib Python,      │     │  (SQLite, all       │
-│   maps, backlinks) │     │  one file per report │     │   history forever)  │
-└────────────────────┘     └──────────┬───────────┘     └─────────────────────┘
-                                      │ renders
-                                      ▼
-                           ┌──────────────────────┐     ┌─────────────────────┐
-                           │  site/*.html         │ ──→ │  localhost or       │
-                           │  self-contained dark │     │  Cloudflare Pages   │
-                           │  dashboard pages     │     │  (+ auth, buttons)  │
-                           └──────────────────────┘     └─────────────────────┘
-```
-
-- **No framework.** Each report is one Python file that pulls data, stores history in SQLite, and renders a self-contained HTML page.
-- **No backend server.** Hosted interactivity is three tiny Cloudflare Pages Functions (auth, queue, research proxy).
-- **No lock-in.** Your entire SEO history is one SQLite file you can query directly.
-
-## Cost control, built in
-
-- Manual refreshes are capped per tool per day (default 2) and research pulls per day (default 20) — a shared dashboard can't drain your balance.
-- Every research pull and grid save shows its dollar cost before/after running.
-- The keyword cap per site (default 100, configurable) bounds the daily tracking spend.
-- Weekly-only for the expensive stuff (map grids, true-SERP brand checks) by default.
-
-## FAQ
-
-**Is the ranking data as good as Semrush/Ahrefs?**
-It's the same class of data — DataForSEO is one of the SERP providers this industry runs on. Tracked positions come from live Google SERPs (top 100, any country/language).
-
-**Can I track competitors' sites too?**
-Yes — add any domain as a site, or use Research → "Steal from a competitor" and the Competitors gap report.
-
-**Multiple sites?**
-Unlimited. Cost scales with keywords, not sites.
-
-**White-label / client dashboards?**
-Out of the box it carries the Tested Media logo. Set `BRAND_NAME` (and optionally `LOGO_FILE`) in `.env` to rebrand everything — sidebar, login page, titles. Deploy once per client, each with its own access key.
-
-**Why not just use rank tracker X?**
-If you're happy paying monthly SaaS pricing, do that. This is for people who want the whole stack, their own data, and a bill that rounds to a coffee.
-
-## Roadmap
-
-- Optional docker-compose for people who prefer containers (the no-Docker default stays)
-- Multiple Google Search Console properties per install
-- Scheduled email digests for rank changes
-- Deeper AI Overview tracking: which domains get cited, not just presence
-- CSV export on every report
-
-Vote or suggest in [Discussions](https://github.com/testedmedia/seo-command-center/discussions).
-
-## Contributing
-
-PRs welcome. The codebase is intentionally boring: stdlib Python, one file per report, no build step. Add a report = one script that writes JSON + HTML, one nav entry.
-
-## License
-
-[MIT](LICENSE)
-
----
-
-<div align="center">
-
-<a href="https://tested.media"><picture>
-<source media="(prefers-color-scheme: dark)" srcset="docs/brand/testedmedia-white.svg">
-<img src="docs/brand/testedmedia-dark.svg" alt="Tested Media" width="190">
-</picture></a>
-
-Built and run in production at [Tested Media](https://tested.media) — every number in this README is from our own deployment.
-
-If this saved you $100+/month, a star helps other people find it.
-
-</div>
+Las consultas reales de posiciones, investigación, competidores y mapas consumen saldo de DataForSEO. El coste varía con el volumen, profundidad y frecuencia. La demo y `/health` no realizan llamadas a DataForSEO.
