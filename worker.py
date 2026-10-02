@@ -20,7 +20,10 @@ refresh buttons, keyword management and live research from the browser) needs a
 free Cloudflare account â€” see README.
 """
 import datetime
+import hashlib
+import hmac
 import http.server
+import html
 import json
 import os
 import pathlib
@@ -30,6 +33,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from http.cookies import SimpleCookie
 
 REPO = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO / "tracker"))
@@ -89,8 +93,33 @@ def copy_pages():
             shutil.copy(f, config.SITE / dst)
 
 
+def _auth_token(password, salt):
+    return hashlib.sha256(f"{password}|{salt}".encode()).hexdigest()
+
+
+def _login_page(brand, error=False):
+    brand = html.escape(brand)
+    error_html = '<p class="error">Clave incorrecta.</p>' if error else ""
+    return f'''<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acceso · {brand}</title><style>
+*{{box-sizing:border-box}}body{{background:#08080b;color:#f5f5f5;font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0}}
+.card{{width:min(420px,calc(100% - 32px));padding:34px;border:1px solid #303038;border-radius:16px;background:#101014}}
+h1{{margin:0 0 8px;color:#ff7a2e}}p{{color:#aaa}}label{{display:block;margin:24px 0 8px}}
+input,button{{width:100%;padding:12px;border-radius:8px;font:inherit}}input{{background:#08080b;color:#fff;border:1px solid #444}}
+button{{margin-top:14px;background:#ff7a2e;color:#16100c;border:0;font-weight:800;cursor:pointer}}.error{{color:#ff6b6b}}
+</style></head><body><main class="card"><h1>{brand}</h1><p>Acceso solo autorizado</p>
+<form method="post" action="/login"><label for="password">Clave de acceso</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+{error_html}<button type="submit">Entrar</button></form></main></body></html>'''.encode()
+
+
 class DashboardHandler(http.server.SimpleHTTPRequestHandler):
-    """Sirve exclusivamente el directorio publico, sin listados."""
+    """Sirve exclusivamente el directorio publico, con autenticacion local."""
+    access_key = ""
+    auth_salt = "seo-radar-local"
+    brand_name = "SEO Radar Local"
+
     def end_headers(self):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
@@ -102,8 +131,36 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "No encontrado")
         return None
 
+    def _authenticated(self):
+        cookie = SimpleCookie()
+        try:
+            cookie.load(self.headers.get("Cookie", ""))
+        except Exception:
+            return False
+        value = cookie.get("rt_auth")
+        if not value:
+            return False
+        expected = _auth_token(self.access_key, self.auth_salt)
+        return hmac.compare_digest(value.value, expected)
+
+    def _send_login(self, error=False):
+        body = _login_page(self.brand_name, error)
+        self.send_response(401 if error else 200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _redirect(self, location):
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
-        if urllib.parse.urlsplit(self.path).path == "/health":
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/health":
             body = json.dumps({"status": "ok", "service": "seo-radar-local"}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -111,7 +168,46 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if path == "/logout":
+            self.send_response(303)
+            self.send_header("Location", "/login")
+            self.send_header("Set-Cookie", "rt_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if path == "/login":
+            if self._authenticated():
+                self._redirect("/")
+            else:
+                self._send_login()
+            return
+        if not self._authenticated():
+            self._redirect("/login")
+            return
         super().do_GET()
+
+    def do_POST(self):
+        if urllib.parse.urlsplit(self.path).path != "/login":
+            self.send_error(404, "No encontrado")
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length <= 0 or length > 4096:
+            self.send_error(400, "Solicitud no valida")
+            return
+        form = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
+        supplied = (form.get("password") or [""])[0]
+        if not hmac.compare_digest(supplied, self.access_key):
+            self._send_login(error=True)
+            return
+        token = _auth_token(self.access_key, self.auth_salt)
+        self.send_response(303)
+        self.send_header("Location", "/")
+        self.send_header("Set-Cookie", f"rt_auth={token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
 
 def _empty_page():
@@ -121,12 +217,15 @@ def _empty_page():
 
 def serve(port=None):
     port = int(port if port is not None else os.environ.get("PORT", "8000"))
+    DashboardHandler.access_key = config.require("ACCESS_KEY", "Configuralo como secreto en Easypanel.")
+    DashboardHandler.auth_salt = config.env("AUTH_SALT", "seo-radar-local")
+    DashboardHandler.brand_name = config.brand_name()
     render_all()
     _empty_page()
     import functools
     handler = functools.partial(DashboardHandler, directory=str(config.SITE))
     print(f"SEO Radar Local disponible en 0.0.0.0:{port} (Ctrl-C para detener)")
-    print("Protege el panel con autenticacion en el proxy. Algunas acciones requieren Cloudflare Pages Functions.")
+    print("Panel protegido con ACCESS_KEY. Algunas acciones aun requieren la consola.")
     http.server.ThreadingHTTPServer(("0.0.0.0", port), handler).serve_forever()
 
 
@@ -272,3 +371,4 @@ if __name__ == "__main__":
         loop()
     else:
         print(__doc__)
+
