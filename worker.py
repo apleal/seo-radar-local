@@ -30,6 +30,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -60,6 +61,20 @@ PAGES = {  # rendered file -> site path
     "link-gap.html": "link-gap.html",
     "map-grid.html": "map-grid.html",
 }
+
+PAGE_ROUTES = {
+    "/": "/index.html",
+    "/research": "/research.html",
+    "/explorer": "/explorer.html",
+    "/competitors": "/competitors.html",
+    "/ai-visibility": "/ai-visibility.html",
+    "/site-health": "/site-health.html",
+    "/link-gap": "/link-gap.html",
+    "/map-grid": "/map-grid.html",
+}
+
+_job_lock = threading.Lock()
+_running_jobs = set()
 
 
 def run_tool(name):
@@ -158,6 +173,44 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self.end_headers()
 
+    def _json(self, payload, status=200):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    @staticmethod
+    def _run_background(tool):
+        try:
+            if tool == "all":
+                for name in TOOLS:
+                    if name not in {"rankings-full"}:
+                        run_tool(name)
+            else:
+                run_tool(tool)
+            render_all()
+        except BaseException as error:
+            print(f"Actualización {tool} fallida: {error}", flush=True)
+        finally:
+            with _job_lock:
+                _running_jobs.discard(tool)
+
+    def _queue_refresh(self, tool):
+        allowed = {"rankings", "competitors", "ai-visibility", "site-health", "link-gap", "map-grid", "all"}
+        if tool not in allowed:
+            self._json({"ok": False, "error": "herramienta desconocida"}, 400)
+            return
+        with _job_lock:
+            if tool in _running_jobs or "all" in _running_jobs:
+                self._json({"ok": True, "queued": tool, "running": True})
+                return
+            _running_jobs.add(tool)
+        threading.Thread(target=self._run_background, args=(tool,), daemon=True).start()
+        self._json({"ok": True, "queued": tool, "running": True, "used": 1, "limit": 2})
+
     def do_GET(self):
         path = urllib.parse.urlsplit(self.path).path
         if path == "/health":
@@ -184,10 +237,20 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         if not self._authenticated():
             self._redirect("/login")
             return
+        if path in PAGE_ROUTES:
+            self.path = PAGE_ROUTES[path]
         super().do_GET()
 
     def do_POST(self):
-        if urllib.parse.urlsplit(self.path).path != "/login":
+        parsed = urllib.parse.urlsplit(self.path)
+        if parsed.path == "/refresh":
+            if not self._authenticated():
+                self._json({"ok": False, "error": "no autorizado"}, 401)
+                return
+            tool = (urllib.parse.parse_qs(parsed.query).get("tool") or [""])[0]
+            self._queue_refresh(tool)
+            return
+        if parsed.path != "/login":
             self.send_error(404, "No encontrado")
             return
         try:
@@ -371,4 +434,3 @@ if __name__ == "__main__":
         loop()
     else:
         print(__doc__)
-
