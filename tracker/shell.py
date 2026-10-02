@@ -37,14 +37,14 @@ _ICONS = {
 _GLOBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>'
 
 _REPORTS = [
-    ("rankings", "/", t("rankings"), "keywords &amp; positions"),
-    ("research", "/research", t("research"), "keyword ideas"),
-    ("explorer", "/explorer", t("site_explorer"), "analyze any domain"),
-    ("competitors", "/competitors", t("competitors"), "keyword gap"),
-    ("ai-visibility", "/ai-visibility", t("ai_visibility"), "AI Overview citations"),
-    ("site-health", "/site-health", t("site_health"), "technical audit"),
-    ("link-gap", "/link-gap", t("link_gap"), "links competitors have"),
-    ("map-grid", "/map-grid", t("map_grid"), "local map-pack coverage"),
+    ("rankings", "/", t("rankings"), "palabras clave y posiciones"),
+    ("research", "/research.html", t("research"), "ideas de palabras clave"),
+    ("explorer", "/explorer.html", t("site_explorer"), "analiza cualquier dominio"),
+    ("competitors", "/competitors.html", t("competitors"), "brecha de palabras clave"),
+    ("ai-visibility", "/ai-visibility.html", t("ai_visibility"), "menciones en respuestas de IA"),
+    ("site-health", "/site-health.html", t("site_health"), "auditoría técnica"),
+    ("link-gap", "/link-gap.html", t("link_gap"), "enlaces de la competencia"),
+    ("map-grid", "/map-grid.html", t("map_grid"), "visibilidad en Google Maps"),
 ]
 
 # Same tokens + sidebar CSS as the main dashboard template, plus the shared
@@ -187,4 +187,3 @@ def page(active, title_html, content, updated="", right_meta="",
 </main>
 </div>
 """ + refresh_js + body_end + """</body></html>""")
-
