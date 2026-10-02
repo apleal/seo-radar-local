@@ -3,11 +3,11 @@
 to data/keywords.json. Exit code 10 = ops applied (poller should
 re-track + redeploy); 0 = nothing to do.
 
-Ops: add_keywords {brand, tier, keywords[]} Â· remove_keyword {brand, keyword}
+Ops: add_keywords {brand, tier, keywords[]} · remove_keyword {brand, keyword}
      add_domain {name, domain, gsc_site?, location_code?, language_code?, seed_keywords[]?}
      remove_domain {brand}
      set_geogrid {brand, center:[lat,lng], grid, spacing_miles, zoom?, keywords[]}
-     add_geogrid_keywords {brand, keywords[]} Â· remove_geogrid_keyword {brand, keyword}
+     add_geogrid_keywords {brand, keywords[]} · remove_geogrid_keyword {brand, keyword}
      remove_geogrid {brand}
 Removals go to blocked_keywords so auto-discovery can't resurrect them.
 Geogrid ops queue a map-grid re-run themselves (req:map-grid) instead of a full re-track.
@@ -32,7 +32,7 @@ def kv(path, method="GET", data=None):
 
 def main():
     if not API:
-        return 0  # hosted mode not configured â€” nothing to poll
+        return 0  # hosted mode not configured — nothing to poll
     # mgmt-dirty flag gates the list call: KV free tier allows only 1,000 list
     # ops/day. manage.js sets the flag on every queued op; deleting it BEFORE
     # listing means an op queued mid-apply re-sets it for the next cycle.
@@ -160,3 +160,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

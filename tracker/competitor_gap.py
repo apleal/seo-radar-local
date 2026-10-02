@@ -6,7 +6,7 @@ Per brand:
   2. domain_intersection -> keywords each competitor ranks for that WE DON'T (the gap)
 Aggregates, dedupes, scores, renders competitors.html for the rank-tracker site.
 
-Cost â‰ˆ $0.05/brand. Run monthly or on demand:
+Cost ≈ $0.05/brand. Run monthly or on demand:
   python3 scripts/seo-competitor-gap.py
 """
 import base64, json, pathlib, sys, urllib.request, datetime
@@ -134,19 +134,19 @@ def render(result):
         for g in b["gaps"]:
             who = ", ".join(f'{c["domain"]}{"#"+str(c["rank"]) if c["rank"] else ""}'.replace(c["domain"], c["domain"].split(".")[0]) for c in g["competitors"][:3])
             multi = len(g["competitors"])
-            gaps += (f'<tr><td class="kw">{g["keyword"]}{"<span class=hot>"+str(multi)+"Ã—</span>" if multi>1 else ""}</td>'
-                     f'<td class="num vol">{g["vol"]:,}</td><td class="num">{"$"+format(g["cpc"],".2f") if g["cpc"] else "â€”"}</td>'
+            gaps += (f'<tr><td class="kw">{g["keyword"]}{"<span class=hot>"+str(multi)+"×</span>" if multi>1 else ""}</td>'
+                     f'<td class="num vol">{g["vol"]:,}</td><td class="num">{"$"+format(g["cpc"],".2f") if g["cpc"] else "—"}</td>'
                      f'<td class="who">{who}</td></tr>')
         brands_html.append(f"""
   <section class="card"><div class="chead"><h2>{brand}</h2><span class="dom">{b["domain"]}</span>
-    <span class="score">{len(b["gaps"])} gap keywords Â· vs {", ".join(b["picked"]) or "â€”"}</span></div>
+    <span class="score">{len(b["gaps"])} gap keywords · vs {", ".join(b["picked"]) or "—"}</span></div>
     <div class="grid">
       <div><div class="sublbl">Top organic competitors</div>
       <div class="scroll"><table><thead><tr><th>Dominio</th><th>Shared kw</th><th>Their kw</th><th>Est. traffic</th></tr></thead>
       <tbody>{comps or '<tr><td colspan=4>None found</td></tr>'}</tbody></table></div></div>
-      <div><div class="sublbl">Palabra clave gap â€” they rank, you don't (sorted: most competitors, then volume)</div>
+      <div><div class="sublbl">Palabra clave gap — they rank, you don't (sorted: most competitors, then volume)</div>
       <div class="scroll gscroll"><table><thead><tr><th>Palabra clave</th><th>Volumen</th><th>CPC</th><th>Who ranks</th></tr></thead>
-      <tbody>{gaps or '<tr><td colspan=4>No gap â€” or run again later.</td></tr>'}</tbody></table></div></div>
+      <tbody>{gaps or '<tr><td colspan=4>No gap — or run again later.</td></tr>'}</tbody></table></div></div>
     </div>
   </section>""")
     html = seo_shell.page(
@@ -166,3 +166,4 @@ if __name__ == "__main__":
         render(json.loads(OUT_JSON.read_text()))
     else:
         render(run())
+

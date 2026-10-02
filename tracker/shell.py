@@ -157,11 +157,11 @@ def _reports_nav(active):
 
 
 def page(active, title_html, content, updated="", right_meta="",
-         refresh_tool=None, refresh_label="â†» Re-run",
+         refresh_tool=None, refresh_label="↻ Re-run",
          extra_css="", head_extra="", body_end="", page_title=None):
     logo = config.logo_html()
     if page_title is None:
-        page_title = title_html.replace("<span>", "").replace("</span>", "") + " Â· " + config.brand_name()
+        page_title = title_html.replace("<span>", "").replace("</span>", "") + " · " + config.brand_name()
     refresh_btn = f'<button class="rfr" id="refreshbtn">{refresh_label}</button>' if refresh_tool else ""
     refresh_js = ("<script>" + _REFRESH_JS.replace("__TOOL__", refresh_tool) + "</script>") if refresh_tool else ""
     upd = f'<span class="upd">{right_meta}</span>' if right_meta else ""
@@ -179,7 +179,7 @@ def page(active, title_html, content, updated="", right_meta="",
   <nav class="nav"><a class="navitem" href="/"><span class="bico">""" + _GLOBE + """</span><span class="btxt"><span class="bname">Todas las webs</span><span class="bmeta">rankings dashboard</span></span></a>""" + _brand_items() + """</nav>
   <div class="navlbl" style="margin-top:14px">Informes</div>
   <nav class="nav">""" + _reports_nav(active) + """</nav>
-  <div class="sfoot">Última actualización:<br>""" + (updated or "â€”") + """<br><br>Google España Â· top 100<br>Actualización diaria Â· mapa semanal</div>
+  <div class="sfoot">Última actualización:<br>""" + (updated or "—") + """<br><br>Google España · top 100<br>Actualización diaria · mapa semanal</div>
 </aside>
 <main>
   <div class="mhead"><h1>""" + title_html + """</h1>""" + upd + refresh_btn + """</div>
@@ -187,3 +187,4 @@ def page(active, title_html, content, updated="", right_meta="",
 </main>
 </div>
 """ + refresh_js + body_end + """</body></html>""")
+

@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""SEO Radar Local worker â€” runs trackers, polls the dashboard queue, deploys.
+"""SEO Radar Local worker — runs trackers, polls the dashboard queue, deploys.
 
 Commands:
   python worker.py run <tool>        run one tool now (rankings | research-page |
                                      competitors | ai-visibility | site-health |
                                      link-gap | map-grid | all)
   python worker.py render            re-render every page from stored data (free)
-  python worker.py serve [port]      local mode â€” serve the dashboard at localhost:8000
+  python worker.py serve [port]      local mode — serve the dashboard at localhost:8000
   python worker.py deploy            deploy the site to Cloudflare Pages (hosted mode)
   python worker.py deploy-config     push ACCESS_KEY + DataForSEO secrets + KV binding
                                      to the Pages project (one-time, after setup.py)
-  python worker.py loop              hosted mode â€” poll the refresh/manage queue every
+  python worker.py loop              hosted mode — poll the refresh/manage queue every
                                      2 min and auto-run the daily refresh (put this in
                                      cron / launchd / a systemd timer, or just leave a
                                      terminal running)
 
 Local mode needs nothing but DataForSEO credentials. Hosted mode (self-serve
 refresh buttons, keyword management and live research from the browser) needs a
-free Cloudflare account â€” see README.
+free Cloudflare account — see README.
 """
 import datetime
 import hashlib
@@ -65,9 +65,9 @@ PAGES = {  # rendered file -> site path
 def run_tool(name):
     steps = TOOLS.get(name)
     if not steps:
-        raise SystemExit(f"unknown tool '{name}' â€” one of: {', '.join(TOOLS)}, all")
+        raise SystemExit(f"unknown tool '{name}' — one of: {', '.join(TOOLS)}, all")
     for script, args in steps:
-        print(f"â†’ {script} {' '.join(args)}", flush=True)
+        print(f"→ {script} {' '.join(args)}", flush=True)
         r = subprocess.run([sys.executable, str(REPO / "tracker" / script), *args])
         if r.returncode != 0:
             raise SystemExit(r.returncode)  # the tool already printed why
@@ -82,7 +82,7 @@ def render_all():
         try:
             subprocess.run([sys.executable, str(REPO / "tracker" / script), *args], check=True)
         except subprocess.CalledProcessError:
-            print(f"  ({script} skipped â€” no data yet)", flush=True)
+            print(f"  ({script} skipped — no data yet)", flush=True)
     copy_pages()
 
 
@@ -232,7 +232,7 @@ def serve(port=None):
 def _cf():
     cf = config.cloudflare()
     if not cf:
-        raise SystemExit("El modo alojado no está configurado â€” set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
+        raise SystemExit("El modo alojado no está configurado — set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
                          "(or use `python worker.py serve` for local mode).")
     return cf
 
@@ -264,7 +264,7 @@ def deploy_config():
     try:
         _cf_api(cf, f"/accounts/{acct}/pages/projects/{cf['project']}")
     except urllib.error.HTTPError:
-        print(f"Creating Pages project '{cf['project']}'â€¦")
+        print(f"Creating Pages project '{cf['project']}'…")
         _cf_api(cf, f"/accounts/{acct}/pages/projects", "POST",
                 {"name": cf["project"], "production_branch": "main"})
     # ensure KV namespace
@@ -288,7 +288,7 @@ def deploy_config():
         "kv_namespaces": {"REFRESH_KV": {"namespace_id": ns}},
     }}}
     _cf_api(cf, f"/accounts/{acct}/pages/projects/{cf['project']}", "PATCH", payload)
-    print("âœ“ Pages project configured (access key, DataForSEO secrets, queue binding).")
+    print("✓ Pages project configured (access key, DataForSEO secrets, queue binding).")
     print("Now run: python worker.py run all && python worker.py deploy")
 
 
@@ -303,7 +303,7 @@ def _kv(cf, path, method="GET", data=None):
 def loop():
     cf = _cf()
     if not cf.get("kv_namespace"):
-        raise SystemExit("Falta CF_KV_NAMESPACE en .env â€” ejecuta primero `python worker.py deploy-config`.")
+        raise SystemExit("Falta CF_KV_NAMESPACE en .env — ejecuta primero `python worker.py deploy-config`.")
     run_hour = int(config.env("DAILY_REFRESH_HOUR", "6"))
     last_daily = None
     print(f"Consultando la cola cada 120 s; actualización diaria a las {run_hour:02d}:00. Ctrl-C to stop.")
@@ -314,7 +314,7 @@ def loop():
             pending = []
             if r.returncode == 10:
                 pending.append("rankings")
-            # 2. requested refreshes â€” single "queue" key, not /keys?prefix=
+            # 2. requested refreshes — single "queue" key, not /keys?prefix=
             # (KV free tier caps list ops at 1,000/day; reads at 100,000/day)
             try:
                 queued = _kv(cf, "/values/queue")

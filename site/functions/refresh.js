@@ -2,7 +2,7 @@
 // so anything reaching here is already signed in.
 const TOOLS = ["rankings", "competitors", "ai-visibility", "site-health", "link-gap", "map-grid", "all"];
 
-const DAILY_LIMIT = 2; // manual refreshes per tool per day â€” protects API credits
+const DAILY_LIMIT = 2; // manual refreshes per tool per day — protects API credits
 
 export async function onRequestPost(context) {
   const url = new URL(context.request.url);
@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: `se ha alcanzado el límite diario (${DAILY_LIMIT}/day per tool)`, used, limit: DAILY_LIMIT }, 429);
   }
   await kv.put(countKey, String(used + 1), { expirationTtl: 172800 });
-  // single "queue" key ({tool: ts}) â€” the worker polls it every cycle, so one
+  // single "queue" key ({tool: ts}) — the worker polls it every cycle, so one
   // read per cycle instead of a kv.list (free tier caps list ops at 1,000/day)
   const queue = JSON.parse((await kv.get("queue")) || "{}");
   queue[tool] = Date.now();
@@ -42,3 +42,4 @@ function json(obj, status = 200) {
     status, headers: { "Content-Type": "application/json" },
   });
 }
+

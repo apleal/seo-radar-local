@@ -2,15 +2,15 @@
 """Local map-pack geogrid tracker (LocalFalcon-style).
 
 For each brand with a `geogrid` block in keywords.json:
-  1. Build an NÃ—N grid of GPS points around the service-area center.
-  2. For each keyword Ã— point, query Google Maps SERP FROM that exact point
+  1. Build an N×N grid of GPS points around the service-area center.
+  2. For each keyword × point, query Google Maps SERP FROM that exact point
      and find the brand's map-pack rank there.
   3. Store one row per (point, keyword) in the `geogrid` SQLite table.
-  4. render() emits map-grid.html â€” a dark Leaflet map with a colored,
-     numbered pin per point (green â‰¤3, orange 4-10, red 11+/absent),
+  4. render() emits map-grid.html — a dark Leaflet map with a colored,
+     numbered pin per point (green ≤3, orange 4-10, red 11+/absent),
      keyword chips, a run selector, and a compare-to-previous-run toggle.
 
-Cost â‰ˆ $0.002/pull. 7Ã—7 Ã— 3 keywords = $0.29/run per brand. Weekly, not daily.
+Cost ≈ $0.002/pull. 7×7 × 3 keywords = $0.29/run per brand. Weekly, not daily.
 
 Usage: seo-geogrid.py [track|render|both]   (default: both)
 """
@@ -52,7 +52,7 @@ def init_db():
 
 
 def grid_points(center, n, spacing_miles):
-    """NÃ—N grid of (lat,lng) centered on `center`, `spacing_miles` apart."""
+    """N×N grid of (lat,lng) centered on `center`, `spacing_miles` apart."""
     lat0, lng0 = center
     half = (n - 1) / 2.0
     dlat = spacing_miles / 69.0
@@ -104,7 +104,7 @@ def track():
         n = int(gg.get("grid", 7))
         zoom = gg.get("zoom", "13z")
         pts = grid_points(gg["center"], n, float(gg.get("spacing_miles", 3.5)))
-        print(f"{brand}: {n}x{n}={len(pts)} pts Ã— {len(gg['keywords'])} kw @ {zoom}", flush=True)
+        print(f"{brand}: {n}x{n}={len(pts)} pts × {len(gg['keywords'])} kw @ {zoom}", flush=True)
         rows = []
         for kw in gg["keywords"]:
             found, ranks = 0, []
@@ -120,7 +120,7 @@ def track():
                 if rank is not None:
                     found += 1
                     ranks.append(rank)
-            avg = f"{sum(ranks)/len(ranks):.1f}" if ranks else "â€”"
+            avg = f"{sum(ranks)/len(ranks):.1f}" if ranks else "—"
             top3 = sum(1 for r in ranks if r <= 3)
             print(f"    {kw:26} in-pack {found}/{len(pts)}  avg {avg}  top3 {top3}", flush=True)
         con.executemany("INSERT INTO geogrid(checked_at,brand,keyword,lat,lng,rank,top3) VALUES (?,?,?,?,?,?,?)", rows)
@@ -209,26 +209,26 @@ def render():
     payload = json.dumps({"data": data, "centers": centers, "brands": brand_cfg})
     content = """<p class="legend">
 <span class="swatch"><i class="dot" style="background:#39d98a"></i>Top 3 (in the pack)</span>
-<span class="swatch"><i class="dot" style="background:#ff7a2e"></i>4â€“10</span>
+<span class="swatch"><i class="dot" style="background:#ff7a2e"></i>4–10</span>
 <span class="swatch"><i class="dot" style="background:#ff5c5c"></i>11+ / not shown</span>
 Each pin = your Google map-pack rank when someone searches from that exact spot.
-<button class="rfr" id="cfgbtn" style="margin-left:12px;padding:5px 12px;font-size:12px">âš™ Set up grid</button></p>
+<button class="rfr" id="cfgbtn" style="margin-left:12px;padding:5px 12px;font-size:12px">⚙ Configurar cuadrícula</button></p>
 <div id="mount"></div>
 <div class="overlay" id="ggModal">
   <div class="modal">
     <h3>Grid setup</h3>
     <div class="mhint">Track your Google map-pack rank across a grid of GPS points. Scans run on the next queue pass (~2-5 min), then weekly.</div>
     <div class="mlbl">Brand</div><div class="chips" id="ggBrand"></div>
-    <div class="mlbl">Grid center â€” lat, lng</div>
+    <div class="mlbl">Grid center — lat, lng</div>
     <input id="ggCenter" placeholder="30.2672, -97.7431">
-    <div class="mhint">Google Maps â†’ right-click your service-area center â†’ click the coordinates to copy them.</div>
+    <div class="mhint">Google Maps → right-click your service-area center → click the coordinates to copy them.</div>
     <div class="mlbl">Grid size</div>
     <div class="chips" id="ggSize">
-      <button data-v="5">5 Ã— 5</button><button data-v="7" class="on">7 Ã— 7</button><button data-v="9">9 Ã— 9</button>
+      <button data-v="5">5 × 5</button><button data-v="7" class="on">7 × 7</button><button data-v="9">9 × 9</button>
     </div>
     <div class="mlbl">Point spacing (miles)</div>
     <input id="ggSpacing" type="number" step="0.5" min="0.5" max="15" value="3.5">
-    <div class="mlbl">Palabra claves â€” one per line (max 5)</div>
+    <div class="mlbl">Palabra claves — one per line (max 5)</div>
     <textarea id="ggKws" rows="4" placeholder="dentist&#10;emergency dentist"></textarea>
     <div class="mrow">
       <button class="mbtn ghost" id="ggEliminar" style="margin-right:auto;color:var(--down);border-color:rgba(255,92,92,.35);display:none">Eliminar grid</button>
@@ -246,7 +246,7 @@ function manage(body, okMsg){
   return fetch('/manage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
     .then(function(d){ toast(d.ok?okMsg:('No se pudo completar: '+(d.error||'unknown'))); return d.ok; })
-    .catch(function(){ toast('Request no se pudo completar â€” inténtalo de nuevo'); return false; });
+    .catch(function(){ toast('Request no se pudo completar — inténtalo de nuevo'); return false; });
 }
 function pinColor(r){ if(r===null||r===undefined) return '#ff5c5c'; if(r<=3) return '#39d98a'; if(r<=10) return '#ff7a2e'; return '#ff5c5c'; }
 function pinText(r){ return (r===null||r===undefined) ? '\\u2014' : String(r); }
@@ -263,7 +263,7 @@ function setKd(card, sel, diff, fmt){
   el.classList.remove('up','down');
   if(diff===null||diff===undefined||Math.abs(diff)<0.05){ el.textContent=''; return; }
   var up=diff>0;  // positive = improvement (caller orients the sign)
-  el.textContent=(up?'â–²':'â–¼')+fmt(Math.abs(diff));
+  el.textContent=(up?'▲':'▼')+fmt(Math.abs(diff));
   el.classList.add(up?'up':'down');
 }
 function renderTrend(card, runsMap){
@@ -280,8 +280,8 @@ function renderTrend(card, runsMap){
   var t3Line=st.map(function(s,i){return x(i)+','+yPct(s.t3);}).join(' ');
   var dots='';
   st.forEach(function(s,i){
-    dots+='<circle cx="'+x(i)+'" cy="'+yAvg(s.avg===null?maxAvg:s.avg)+'" r="3.5" fill="#ff7a2e"><title>'+s.run+' â€” avg rank '+(s.avg===null?'not in pack':s.avg.toFixed(1))+'</title></circle>';
-    dots+='<circle cx="'+x(i)+'" cy="'+yPct(s.t3)+'" r="3.5" fill="#39d98a"><title>'+s.run+' â€” top 3: '+Math.round(s.t3)+'% of pins</title></circle>';
+    dots+='<circle cx="'+x(i)+'" cy="'+yAvg(s.avg===null?maxAvg:s.avg)+'" r="3.5" fill="#ff7a2e"><title>'+s.run+' — avg rank '+(s.avg===null?'not in pack':s.avg.toFixed(1))+'</title></circle>';
+    dots+='<circle cx="'+x(i)+'" cy="'+yPct(s.t3)+'" r="3.5" fill="#39d98a"><title>'+s.run+' — top 3: '+Math.round(s.t3)+'% of pins</title></circle>';
   });
   var labels='';
   var step=Math.max(1,Math.ceil(st.length/6));
@@ -307,10 +307,10 @@ function buildBrand(brand){
     +'<div class="bar"><span class="lbl">Palabra clave</span><span class="kwchips"></span>'
     +'<span class="runsel"><label class="cmp"><input type="checkbox" class="cmpbox"> vs prev</label>'
     +'<button class="prev">\\u2039</button><span class="rlabel"></span><button class="next">\\u203a</button></span></div>'
-    +'<div class="kpis"><div class="kpi"><div class="v vAvg">â€”<span class="kd kdAvg"></span></div><div class="k">Avg map rank</div></div>'
-    +'<div class="kpi"><div class="v vT3">â€”<span class="kd kdT3"></span></div><div class="k">% pins in top 3</div></div>'
-    +'<div class="kpi"><div class="v vT10">â€”<span class="kd kdT10"></span></div><div class="k">% pins in top 10</div></div>'
-    +'<div class="kpi"><div class="v vCov">â€”</div><div class="k">Grid points</div></div></div>'
+    +'<div class="kpis"><div class="kpi"><div class="v vAvg">—<span class="kd kdAvg"></span></div><div class="k">Avg map rank</div></div>'
+    +'<div class="kpi"><div class="v vT3">—<span class="kd kdT3"></span></div><div class="k">% pins in top 3</div></div>'
+    +'<div class="kpi"><div class="v vT10">—<span class="kd kdT10"></span></div><div class="k">% pins in top 10</div></div>'
+    +'<div class="kpi"><div class="v vCov">—</div><div class="k">Grid points</div></div></div>'
     +'<div class="ghist"><div class="glbl">History<span><i class="dot" style="background:#ff7a2e;display:inline-block"></i>avg rank (lower = better)</span><span><i class="dot" style="background:#39d98a;display:inline-block"></i>% pins in top 3</span></div><div class="gsvg"></div></div>'
     +'<div class="map" id="map_'+key+'"></div>';
   document.getElementById('mount').appendChild(card);
@@ -348,14 +348,14 @@ function buildBrand(brand){
     runs.reverse();                              // newest first -> idx 0 = latest
     if(!runs.length){
       layer.clearLayers();
-      card.querySelector('.vAvg').childNodes[0].textContent='â€”';
-      card.querySelector('.vT3').childNodes[0].textContent='â€”';
-      card.querySelector('.vT10').childNodes[0].textContent='â€”';
-      card.querySelector('.vCov').textContent='â€”';
+      card.querySelector('.vAvg').childNodes[0].textContent='—';
+      card.querySelector('.vT3').childNodes[0].textContent='—';
+      card.querySelector('.vT10').childNodes[0].textContent='—';
+      card.querySelector('.vCov').textContent='—';
       ['.kdAvg','.kdT3','.kdT10'].forEach(function(s){var e=card.querySelector(s);if(e){e.textContent='';e.classList.remove('up','down');}});
-      card.querySelector('.rlabel').textContent='first scan in progressâ€¦';
+      card.querySelector('.rlabel').textContent='first scan in progress…';
       card.querySelector('.prev').disabled=true; card.querySelector('.next').disabled=true;
-      var g=card.querySelector('.gsvg'); if(g) g.innerHTML='<div class="gempty">"'+state.kw+'" was just added. Its first grid scan is running now â€” pins and history appear here within a few minutes (the page auto-refreshes).</div>';
+      var g=card.querySelector('.gsvg'); if(g) g.innerHTML='<div class="gempty">"'+state.kw+'" was just added. Its first grid scan is running now — pins and history appear here within a few minutes (the page auto-refreshes).</div>';
       return;
     }
     if(state.runIdx>runs.length-1) state.runIdx=runs.length-1;
@@ -389,9 +389,9 @@ function buildBrand(brand){
       L.marker([p.lat,p.lng],{icon:icon}).addTo(layer).bindPopup(pop);
     });
     var n=pts.length;
-    card.querySelector('.vAvg').childNodes[0].textContent = ranked?(sum/ranked).toFixed(1):'â€”';
-    card.querySelector('.vT3').childNodes[0].textContent = n?Math.round(t3/n*100)+'%':'â€”';
-    card.querySelector('.vT10').childNodes[0].textContent = n?Math.round(t10/n*100)+'%':'â€”';
+    card.querySelector('.vAvg').childNodes[0].textContent = ranked?(sum/ranked).toFixed(1):'—';
+    card.querySelector('.vT3').childNodes[0].textContent = n?Math.round(t3/n*100)+'%':'—';
+    card.querySelector('.vT10').childNodes[0].textContent = n?Math.round(t10/n*100)+'%':'—';
     card.querySelector('.vCov').textContent = commas(n);
     // improvement vs the previous run: for rank, lower is better; for %, higher is better
     var ps = prevPts ? runStats(prevPts) : null;
@@ -481,3 +481,4 @@ if __name__ == "__main__":
         track()
     if cmd in ("render", "both"):
         render()
+

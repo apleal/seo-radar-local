@@ -12,7 +12,7 @@ PAGE_CAP pages, and checks each page for:
   - thin content (<200 words)
   - images missing alt text
   - broken internal links (sampled across pages)
-Renders site-health.html for the rank-tracker site. Free â€” runs on the Mini.
+Renders site-health.html for the rank-tracker site. Free — runs on the Mini.
 
   python3 scripts/seo-site-audit.py
 """
@@ -166,7 +166,7 @@ def audit_site(domain):
         pages.append(rec)
         print(f"    {rec.get('status','?'):>3} {u[:90]}", flush=True)
 
-    # redirected sitemap URLs (funnels, locale redirects) serve ANOTHER page's meta â€”
+    # redirected sitemap URLs (funnels, locale redirects) serve ANOTHER page's meta —
     # count them only under the "redirected" notice, never for meta/dup issues
     ok_pages = [p for p in pages if p.get("status") == 200 and not p.get("error")
                 and not p.get("redirected")]
@@ -254,16 +254,16 @@ def render(result):
             rows += (f'<tr><td><span class="pillb {sev}">{ {"crit":"CRITICAL","warn":"WARNING","info":"NOTICE"}[sev] }</span></td>'
                      f'<td class="kw">{label}</td><td class="num">{n}</td><td>{ex_html}</td></tr>')
         if b["broken_links"]:
-            ex = "<br>".join(f'<span class="who">{l["url"].replace("https://","")} â†’ {l["status"] or "dead"}</span>' for l in b["broken_links"][:6])
+            ex = "<br>".join(f'<span class="who">{l["url"].replace("https://","")} → {l["status"] or "dead"}</span>' for l in b["broken_links"][:6])
             rows += (f'<tr><td><span class="pillb crit">CRITICAL</span></td><td class="kw">Broken internal links</td>'
                      f'<td class="num">{len(b["broken_links"])}</td><td>{ex}</td></tr>')
         if not rows:
-            rows = '<tr><td colspan=4 class="kw">No issues found â€” clean crawl.</td></tr>'
+            rows = '<tr><td colspan=4 class="kw">No issues found — clean crawl.</td></tr>'
         scls = "ok" if b["score"] >= 85 else ("mid" if b["score"] >= 65 else "bad")
         blocks.append(f"""
   <section class="card"><div class="chead"><h2>{brand}</h2><span class="dom">{b["domain"]}</span>
     <span class="hscore {scls}">{b["score"]}</span>
-    <span class="score">{b["pages_crawled"]} pages via {b["source"]} Â· {b["noalt_total"]} images missing alt</span></div>
+    <span class="score">{b["pages_crawled"]} pages via {b["source"]} · {b["noalt_total"]} images missing alt</span></div>
     <div class="scroll"><table><thead><tr><th>Severity</th><th>Issue</th><th>Pages</th><th>Examples</th></tr></thead>
     <tbody>{rows}</tbody></table></div>
   </section>""")
@@ -272,7 +272,7 @@ def render(result):
         title_html="Site <span>Health</span>",
         content="".join(blocks),
         updated=result["generated"],
-        right_meta=f'Generado: {result["generated"]} Â· crawled from the Mini, zero API cost',
+        right_meta=f'Generado: {result["generated"]} · crawled from the Mini, zero API cost',
         refresh_tool="site-health",
         extra_css=EXTRA_CSS)
     OUT_HTML.write_text(html, encoding="utf-8")
@@ -293,3 +293,4 @@ if __name__ == "__main__":
         print(f"  {brand:22} score={b['score']} pages={b['pages_crawled']} broken={len(b['broken_links'])}", flush=True)
     OUT_JSON.write_text(json.dumps(result, indent=1))
     render(result)
+

@@ -8,7 +8,7 @@ Overview block and records:
   - which domains ARE cited (the AI-citation competitors)
 Renders ai-visibility.html for the rank-tracker site.
 
-Cost â‰ˆ $0.0035/keyword â‰ˆ $0.25/run. Run weekly:
+Cost ≈ $0.0035/keyword ≈ $0.25/run. Run weekly:
   python3 scripts/seo-ai-visibility.py
 """
 import base64, json, pathlib, sys, urllib.request, datetime
@@ -99,21 +99,21 @@ def render(result):
             if r["has_ai"]:
                 status = ('<span class="pillb ok">CITED</span>' if r["cited"]
                           else '<span class="pillb miss">NOT CITED</span>')
-                refs = ", ".join(r["refs"][:4]) + ("â€¦" if len(r["refs"]) > 4 else "")
+                refs = ", ".join(r["refs"][:4]) + ("…" if len(r["refs"]) > 4 else "")
             else:
                 status = '<span class="pillb none">NO AI OVERVIEW</span>'
-                refs = "â€”"
+                refs = "—"
             rows += f'<tr><td class="kw">{r["keyword"]}</td><td>{status}</td><td class="who">{refs}</td></tr>'
         cited_list = "".join(f'<tr><td class="kw">{d}</td><td class="num">{n}</td></tr>'
-                             for d, n in b["top_cited"]) or '<tr><td colspan=2>â€”</td></tr>'
+                             for d, n in b["top_cited"]) or '<tr><td colspan=2>—</td></tr>'
         pct = f'{b["n_cited"]}/{b["n_ai"]}' if b["n_ai"] else "0/0"
         blocks.append(f"""
   <section class="card"><div class="chead"><h2>{brand}</h2><span class="dom">{b["domain"]}</span>
-    <span class="score">AI Overviews on {b["n_ai"]}/{len(b["rows"])} keywords Â· cited in {pct}</span></div>
+    <span class="score">AI Overviews on {b["n_ai"]}/{len(b["rows"])} keywords · cited in {pct}</span></div>
     <div class="grid">
       <div><div class="sublbl">Who AI cites instead (count)</div>
       <div class="scroll"><table><thead><tr><th>Dominio</th><th>Citations</th></tr></thead><tbody>{cited_list}</tbody></table></div></div>
-      <div><div class="sublbl">Palabra clave Â· AI Overview status Â· cited sources</div>
+      <div><div class="sublbl">Palabra clave · AI Overview status · cited sources</div>
       <div class="scroll gscroll"><table><thead><tr><th>Palabra clave</th><th>Status</th><th>Sources cited</th></tr></thead><tbody>{rows}</tbody></table></div></div>
     </div>
   </section>""")
@@ -122,7 +122,7 @@ def render(result):
         title_html="AI <span>Visibility</span>",
         content="".join(blocks),
         updated=result["generated"],
-        right_meta=f'Generado: {result["generated"]} Â· Google AI Overviews, España, ordenador',
+        right_meta=f'Generado: {result["generated"]} · Google AI Overviews, España, ordenador',
         refresh_tool="ai-visibility",
         extra_css=EXTRA_CSS)
     OUT_HTML.write_text(html, encoding="utf-8")
@@ -134,3 +134,4 @@ if __name__ == "__main__":
         render(json.loads(OUT_JSON.read_text()))
     else:
         render(run())
+

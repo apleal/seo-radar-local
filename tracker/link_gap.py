@@ -10,10 +10,10 @@ Per brand:
   3. HARD junk filter (spam nets, shorteners, mirrors, foreign gov/edu, PBNs,
      un-linkable platforms).
   4. Fetch each survivor's homepage title (free, on the Mini) and CLASSIFY it:
-     Directory / Roundup / Peer / Blog / News â€” each with an outreach angle +
+     Directory / Roundup / Peer / Blog / News — each with an outreach angle +
      difficulty, so it's an action list, not a data dump.
 
-Cost â‰ˆ $0.03/brand (API). Run monthly or on demand:
+Cost ≈ $0.03/brand (API). Run monthly or on demand:
   python3 scripts/seo-link-gap.py
 """
 import base64, gzip, io, json, pathlib, re, sys, urllib.request, datetime
@@ -165,11 +165,11 @@ NEWS_RE = re.compile(r"\b(news|magazine|times|post|daily|journal|press|media|tod
 def classify(ref, title, niche_words):
     t = (title + " " + ref).lower()
     if any(w in t for w in niche_words):
-        return ("Peer / competitor", "Skip (rival) â€” or pitch a partnership / guest-post swap.", "N/A")
+        return ("Peer / competitor", "Skip (rival) — or pitch a partnership / guest-post swap.", "N/A")
     if DIR_RE.search(t):
         return ("Directory / listing", "Submit your listing (many free, some paid). Highest-certainty link.", "Easy")
     if ROUNDUP_RE.search(t):
-        return ("Roundup / resource", "Email the author to be added to the list â€” lead with a unique stat or angle.", "Medium")
+        return ("Roundup / resource", "Email the author to be added to the list — lead with a unique stat or angle.", "Medium")
     if NEWS_RE.search(t):
         return ("News / media", "Digital-PR pitch with a data hook or expert quote (HARO-style).", "Hard")
     return ("Blog / editorial", "Guest-post pitch or expert-quote contribution.", "Medium")
@@ -195,7 +195,7 @@ def run():
         total += c1
         rows, c2 = link_gap(header, [c["domain"] for c in comps], us)
         total += c2
-        # classify survivors (fetch titles â€” free)
+        # classify survivors (fetch titles — free)
         niche = [w for w in re.split(r"\W+", kw.lower()) if len(w) > 3][:3]
         for r in rows:
             r["title"] = fetch_title(r["ref"])
@@ -230,7 +230,7 @@ td.kw a:hover{color:var(--gold)}
 def render(result):
     blocks = []
     for brand, b in result["brands"].items():
-        comps = " Â· ".join(f'{c["domain"]} (#{c["serp_rank"]})' for c in b["competitors"]) or "â€”"
+        comps = " · ".join(f'{c["domain"]} (#{c["serp_rank"]})' for c in b["competitors"]) or "—"
         rows = ""
         for g in b["gaps"]:
             who = ", ".join(d.split(".")[0] for d in g["links_to"])
@@ -238,7 +238,7 @@ def render(result):
             spam = f'<span class="pillb {"miss" if g["spam"]>=15 else "ok"}">{g["spam"]}</span>'
             cat = f'<span class="pillb {CAT_CLASS.get(g["category"],"warn")}">{g["category"]}</span>'
             rows += (f'<tr><td class="kw"><a href="https://{g["ref"]}" target="_blank" rel="noopener">{g["ref"]}</a>'
-                     f'{"<span class=hot>"+str(n)+"Ã—</span>" if n>1 else ""}'
+                     f'{"<span class=hot>"+str(n)+"×</span>" if n>1 else ""}'
                      f'<div class="ttl">{g.get("title","")}</div></td>'
                      f'<td class="num">{g["rank"]:,}</td><td>{cat}</td>'
                      f'<td class="dif">{g["difficulty"]}</td><td class="ang">{g["angle"]}</td>'
@@ -246,9 +246,9 @@ def render(result):
         note = "local service-business peers" if b.get("local") else "top organic competitors"
         blocks.append(f"""
   <section class="card"><div class="chead"><h2>{brand}</h2><span class="dom">{b["domain"]}</span>
-    <span class="score">â€œ{b["keyword"]}â€ Â· {note}: {comps}</span></div>
+    <span class="score">"{b["keyword"]}" · {note}: {comps}</span></div>
     <div class="scroll gscroll"><table><thead><tr>
-      <th>Referring domain â€” they link to rivals, not you</th><th>DR</th><th>Type</th><th>Effort</th><th>How to get the link</th><th>Spam</th>
+      <th>Referring domain — they link to rivals, not you</th><th>DR</th><th>Type</th><th>Effort</th><th>How to get the link</th><th>Spam</th>
     </tr></thead><tbody>{rows or '<tr><td colspan=6 class="kw">No clean link gap found.</td></tr>'}</tbody></table></div>
   </section>""")
     legend = ('<p class="legend">Dominios linking to your rivals but not you, junk filtered, '
@@ -270,3 +270,4 @@ if __name__ == "__main__":
         render(json.loads(OUT_JSON.read_text()))
     else:
         render(run())
+

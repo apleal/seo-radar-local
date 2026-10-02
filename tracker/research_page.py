@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Renders the /research page â€” in-UI keyword research.
+"""Renders the /research page — in-UI keyword research.
 
 Static shell page; all the work happens client-side against the /research
 Pages Function (live DataForSEO proxy) and /manage (add-to-tracking queue).
@@ -90,7 +90,7 @@ el('runbtn').onclick=function(){
       results=d.rows||[];
       renderRows(d);
     })
-    .catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request no se pudo completar â€” inténtalo de nuevo'); });
+    .catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request no se pudo completar — inténtalo de nuevo'); });
 };
 
 function tracked(kw){
@@ -100,7 +100,7 @@ function tracked(kw){
 function renderRows(d){
   el('rescard').style.display='';
   el('rescnt').textContent=results.length.toLocaleString('en-US')+' keywords';
-  el('rescost').textContent='this pull cost $'+(d.cost||0).toFixed(4)+' Â· '+d.used+'/'+d.limit+' research runs today';
+  el('rescost').textContent='this pull cost $'+(d.cost||0).toFixed(4)+' · '+d.used+'/'+d.limit+' research runs today';
   var tb=el('resbody'); tb.innerHTML='';
   results.forEach(function(r,i){
     var tr=document.createElement('tr');
@@ -108,9 +108,9 @@ function renderRows(d){
     tr.innerHTML='<td class="ck"><input type="checkbox" data-i="'+i+'"'+(isTracked?' disabled':'')+'></td>'
       +'<td class="kw">'+r.kw.replace(/</g,'&lt;')+(isTracked?'<span class="already">tracked</span>':'')+'</td>'
       +'<td class="num vol">'+(r.vol||0).toLocaleString('en-US')+'</td>'
-      +'<td class="num">'+(r.cpc?'$'+r.cpc.toFixed(2):'â€”')+'</td>'
-      +'<td><span class="comp '+(r.comp||'')+'">'+(r.comp||'â€”')+'</span></td>'
-      +'<td class="num">'+(r.rank?'#'+r.rank:'â€”')+'</td>';
+      +'<td class="num">'+(r.cpc?'$'+r.cpc.toFixed(2):'—')+'</td>'
+      +'<td><span class="comp '+(r.comp||'')+'">'+(r.comp||'—')+'</span></td>'
+      +'<td class="num">'+(r.rank?'#'+r.rank:'—')+'</td>';
     tb.appendChild(tr);
   });
   updateTrackBtn();
@@ -121,7 +121,7 @@ function selectedKws(){
 }
 function updateTrackBtn(){
   var n=selectedKws().length;
-  el('trackbtn').textContent='Track '+n+' selected â†’ '+sel.brand;
+  el('trackbtn').textContent='Track '+n+' selected → '+sel.brand;
   el('trackbtn').disabled=!n;
 }
 el('selall').onchange=function(){
@@ -137,10 +137,10 @@ el('trackbtn').onclick=function(){
     body:JSON.stringify({action:'add_keywords',brand:sel.brand,tier:sel.tier,keywords:kws})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){ toast('âœ“ '+kws.length+' keywords queued for '+sel.brand+' ('+sel.tier+') â€” tracking in ~2-5 min');
+      if(d.ok){ toast('✓ '+kws.length+' keywords queued for '+sel.brand+' ('+sel.tier+') — tracking in ~2-5 min');
         (TRACKED[sel.brand]=TRACKED[sel.brand]||[]).push.apply(TRACKED[sel.brand],kws.map(function(k){return k.toLowerCase();}));
         renderRows({cost:0,used:'-',limit:'-'});
-        el('rescost').textContent='keywords queued â€” check the Posiciones page after the next update';
+        el('rescost').textContent='keywords queued — check the Posiciones page after the next update';
       } else { toast('No se pudo completar: '+(d.error||'unknown')); b.disabled=false; }
     })
     .catch(function(){ toast('Request no se pudo completar'); b.disabled=false; });
@@ -182,7 +182,7 @@ def render():
     <div class="frow">
       <input type="text" id="compdom" placeholder="competitor.com">
     </div>
-    <div class="hint">Pulls the top 200 keywords the competitor ranks for, sorted by volume â€” their organic playbook. ~$0.02 per pull.</div>
+    <div class="hint">Pulls the top 200 keywords the competitor ranks for, sorted by volume — their organic playbook. ~$0.02 per pull.</div>
   </div>
   <div class="frow">
     <button class="gobtn" id="runbtn">Buscar palabras clave<span id="spin"></span></button>
@@ -218,13 +218,14 @@ def render():
         title_html="Palabra clave <span>Palabras clave</span>",
         content=content,
         updated=now,
-        right_meta="live DataForSEO Â· results in seconds",
+        right_meta="live DataForSEO · results in seconds",
         extra_css=EXTRA_CSS,
         body_end=body_end,
-        page_title="Palabra clave Palabras clave Â· " + config.brand_name())
+        page_title="Palabra clave Palabras clave · " + config.brand_name())
     OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 
 if __name__ == "__main__":
     render()
+

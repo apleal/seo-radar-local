@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed the dashboard with realistic sample data â€” no API key needed.
+"""Seed the dashboard with realistic sample data — no API key needed.
 
     python demo.py && python worker.py serve
 
@@ -62,7 +62,7 @@ KWS = {
 def seed():
     force = "--force" in sys.argv
     if config.DB.exists() and not force:
-        raise SystemExit("data/ already has a database â€” pass --force to overwrite with demo data.")
+        raise SystemExit("data/ already has a database — pass --force to overwrite with demo data.")
     config.DATA.mkdir(exist_ok=True)
     config.KEYWORDS.write_text(json.dumps({"track_cap": 100, "brands": BRANDS}, indent=2))
 
@@ -178,18 +178,19 @@ def seed():
         "Café Acme": {"domain": "acmecoffee.com", "keyword": "café de especialidad", "local": False,
             "competitors": [{"domain": "beanboxco.com", "serp_rank": 3}, {"domain": "roastcollective.com", "serp_rank": 5}],
             "gaps": [{"ref": "coffeereview.com", "rank": 2400, "spam": 4, "links_to": ["beanboxco.com", "roastcollective.com"],
-                      "title": "Coffee Review â€” the world's leading coffee guide",
-                      "category": "Roundup / resource", "angle": "Submit your beans for review â€” lead with a unique origin story.", "difficulty": "Medium"},
+                      "title": "Coffee Review — the world's leading coffee guide",
+                      "category": "Roundup / resource", "angle": "Submit your beans for review — lead with a unique origin story.", "difficulty": "Medium"},
                      {"ref": "sprudge.com", "rank": 5100, "spam": 6, "links_to": ["beanboxco.com"],
-                      "title": "Sprudge â€” coffee news and culture",
+                      "title": "Sprudge — coffee news and culture",
                       "category": "News / media", "angle": "Digital-PR pitch with a data hook or expert quote.", "difficulty": "Hard"},
                      {"ref": "bestcoffeesubscriptions.net", "rank": 890, "spam": 11, "links_to": ["beanboxco.com", "roastcollective.com"],
-                      "title": "Best Coffee Subscriptions â€” 2026 rankings",
+                      "title": "Best Coffee Subscriptions — 2026 rankings",
                       "category": "Directory / listing", "angle": "Submit your listing (many free). Highest-certainty link.", "difficulty": "Easy"}]},
     }}, indent=1))
     con.close()
-    print("âœ“ demo data seeded â€” now run:  python worker.py serve")
+    print("✓ demo data seeded — now run:  python worker.py serve")
 
 
 if __name__ == "__main__":
     seed()
+

@@ -1,4 +1,4 @@
-// Explorador de sitios proxy â€” Ahrefs-style domain/page analysis from the edge via DataForSEO.
+// Explorador de sitios proxy — Ahrefs-style domain/page analysis from the edge via DataForSEO.
 // Auth enforced by _middleware.js (cookie gate). Creds = DFS_LOGIN/DFS_PASSWORD Pages secrets.
 //
 // Tabs (each is one POST {target, tab, ...}):
@@ -16,11 +16,11 @@
 //   competitors  labs competitors_domain                                         ~$0.02
 //   contentgap   labs domain_intersection target vs brand (they rank, brand not) ~$0.02
 //
-// Target may be a bare domain OR a full page URL (Page Inspect mode) â€” backlinks
+// Target may be a bare domain OR a full page URL (Page Inspect mode) — backlinks
 // endpoints take either; Labs endpoints get the domain part when given a URL.
 // Results cache in KV for 24h per target+tab+params (cache hits are free).
-// LIVE pulls capped at DAILY_LIMIT/day across all tabs â€” a runaway backstop, not
-// a budget (a full 11-tab domain analysis â‰ˆ $0.20; 1,000 pulls â‰ˆ $20 worst case).
+// LIVE pulls capped at DAILY_LIMIT/day across all tabs — a runaway backstop, not
+// a budget (a full 11-tab domain analysis ≈ $0.20; 1,000 pulls ≈ $20 worst case).
 const DAILY_LIMIT = 1000;
 const CACHE_TTL = 86400;
 const LABS = "https://api.dataforseo.com/v3/dataforseo_labs/google";
@@ -281,3 +281,4 @@ export async function onRequestPost(context) {
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 }
+

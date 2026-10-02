@@ -2,7 +2,7 @@
 
 Everything user-specific lives in .env (repo root) or real environment
 variables. Nothing here is hardcoded to any person, brand, or machine.
-Zero third-party dependencies Ã¢â‚¬â€ Python stdlib only.
+Zero third-party dependencies — Python stdlib only.
 """
 import base64
 import json
@@ -45,7 +45,7 @@ def require(key, hint=""):
     v = env(key)
     if not v:
         raise SystemExit(
-            f"Missing {key} Ã¢â‚¬â€ add it to .env (run `python setup.py` for the guided setup).{' ' + hint if hint else ''}")
+            f"Missing {key} — add it to .env (run `python setup.py` for the guided setup).{' ' + hint if hint else ''}")
     return v
 
 
@@ -105,3 +105,4 @@ def telegram():
     token = env("TELEGRAM_BOT_TOKEN")
     chat = env("TELEGRAM_CHAT_ID")
     return {"token": token, "chat_id": chat} if token and chat else None
+

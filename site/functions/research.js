@@ -1,6 +1,6 @@
-// Live keyword research proxy â€” calls DataForSEO from the edge so credentials
+// Live keyword research proxy — calls DataForSEO from the edge so credentials
 // never reach the browser. Auth enforced by _middleware.js (cookie gate).
-// Cost guard: DAILY_LIMIT runs/day tracked in KV. Each run â‰ˆ $0.01-0.05.
+// Cost guard: DAILY_LIMIT runs/day tracked in KV. Each run ≈ $0.01-0.05.
 const DAILY_LIMIT = 20;
 const SUGGEST_API = "https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_suggestions/live";
 const RANKED_API = "https://api.dataforseo.com/v3/dataforseo_labs/google/ranked_keywords/live";
@@ -94,3 +94,4 @@ export async function onRequestPost(context) {
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 }
+
