@@ -76,6 +76,14 @@ PAGE_ROUTES = {
 _job_lock = threading.Lock()
 _running_jobs = set()
 
+PENDING_REPORTS = {
+    "competitors.html": ("competitors", "Competidores", "Analiza tus competidores orgánicos y descubre palabras clave que ellos posicionan."),
+    "ai-visibility.html": ("ai-visibility", "Visibilidad en IA", "Comprueba si tu marca aparece en respuestas y resúmenes generados por IA."),
+    "site-health.html": ("site-health", "Salud SEO", "Audita títulos, descripciones, encabezados, enlaces y otros problemas técnicos."),
+    "link-gap.html": ("link-gap", "Oportunidades de enlaces", "Encuentra dominios que enlazan a tus competidores pero todavía no a tu web."),
+    "map-grid.html": ("map-grid", "Mapa de visibilidad local", "Mide tu posición en Google Maps desde distintos puntos de la ciudad."),
+}
+
 
 def run_tool(name):
     steps = TOOLS.get(name)
@@ -98,7 +106,30 @@ def render_all():
             subprocess.run([sys.executable, str(REPO / "tracker" / script), *args], check=True)
         except subprocess.CalledProcessError:
             print(f"  ({script} skipped — no data yet)", flush=True)
+    ensure_report_pages()
     copy_pages()
+
+
+def ensure_report_pages():
+    """Crea páginas informativas cuando un informe aún no tiene datos guardados."""
+    import shell
+    for filename, (active, title, description) in PENDING_REPORTS.items():
+        target = config.DATA / filename
+        if target.exists() and target.stat().st_size:
+            continue
+        content = f'''<section class="card"><div class="chead"><h2>Primer análisis pendiente</h2></div>
+<div style="padding:24px 20px"><p style="color:var(--ink2);max-width:720px">{description}</p>
+<p style="color:var(--mut);margin-top:10px">Pulsa «Ejecutar primer análisis». El proceso continuará en segundo plano y conservará el resultado en el volumen persistente.</p></div></section>'''
+        page = shell.page(
+            active=active,
+            title_html=title,
+            content=content,
+            refresh_tool=active,
+            refresh_label="Ejecutar primer análisis",
+            right_meta="Todavía no hay datos",
+        )
+        target.write_text(page, encoding="utf-8")
+        print(f"Report placeholder -> {target}", flush=True)
 
 
 def copy_pages():
@@ -214,7 +245,9 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlsplit(self.path).path
         if path == "/health":
-            body = json.dumps({"status": "ok", "service": "seo-radar-local"}).encode()
+            reports = {name: (config.SITE / name).exists() for name in PENDING_REPORTS}
+            body = json.dumps({"status": "ok", "service": "seo-radar-local",
+                               "build": "reports-v3", "reports": reports}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))

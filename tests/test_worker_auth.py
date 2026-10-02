@@ -43,6 +43,7 @@ class AuthServerTests(unittest.TestCase):
         response, data = self.request("GET", "/health")
         self.assertEqual(response.status, 200)
         self.assertIn(b'"status": "ok"', data)
+        self.assertIn(b'"build": "reports-v3"', data)
 
     def test_dashboard_requires_login(self):
         response, _ = self.request("GET", "/")
@@ -95,6 +96,17 @@ class AuthServerTests(unittest.TestCase):
         run.assert_called_once_with("rankings")
         with worker._job_lock:
             worker._running_jobs.clear()
+
+
+class PendingReportTests(unittest.TestCase):
+    def test_missing_reports_receive_a_placeholder(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(worker.config, "DATA", Path(tmp)), \
+                mock.patch("shell.page", return_value="informe pendiente") as page:
+            worker.ensure_report_pages()
+            for filename in worker.PENDING_REPORTS:
+                self.assertEqual(Path(tmp, filename).read_text(encoding="utf-8"), "informe pendiente")
+            self.assertEqual(page.call_count, len(worker.PENDING_REPORTS))
 
 
 if __name__ == "__main__":
