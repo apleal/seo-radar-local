@@ -272,10 +272,10 @@ def render(result):
         title_html="Site <span>Health</span>",
         content="".join(blocks),
         updated=result["generated"],
-        right_meta=f'Generated: {result["generated"]} · crawled from the Mini, zero API cost',
+        right_meta=f'Generado: {result["generated"]} · crawled from the Mini, zero API cost',
         refresh_tool="site-health",
         extra_css=EXTRA_CSS)
-    OUT_HTML.write_text(html)
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 
@@ -293,3 +293,4 @@ if __name__ == "__main__":
         print(f"  {brand:22} score={b['score']} pages={b['pages_crawled']} broken={len(b['broken_links'])}", flush=True)
     OUT_JSON.write_text(json.dumps(result, indent=1))
     render(result)
+

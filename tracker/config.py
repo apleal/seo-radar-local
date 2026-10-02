@@ -12,6 +12,8 @@ import pathlib
 REPO = pathlib.Path(__file__).resolve().parent.parent
 DATA = REPO / "data"
 SITE = REPO / "site"
+DATA.mkdir(parents=True, exist_ok=True)
+SITE.mkdir(parents=True, exist_ok=True)
 KEYWORDS = DATA / "keywords.json"
 DB = DATA / "ranks.db"
 RESEARCH_CACHE = DATA / "research-cache.json"
@@ -49,13 +51,13 @@ def require(key, hint=""):
 
 def dfs_header():
     """Authorization header for DataForSEO."""
-    login = require("DATAFORSEO_LOGIN", "Sign up at https://dataforseo.com/?aff=254685 (pay-as-you-go).")
+    login = require("DATAFORSEO_LOGIN", "Sign up at https://dataforseo.com/ (pay-as-you-go).")
     password = require("DATAFORSEO_PASSWORD")
     return "Basic " + base64.b64encode(f"{login}:{password}".encode()).decode()
 
 
-DEFAULT_BRAND = "Tested Media"  # made by tested.media — set BRAND_NAME in .env to rebrand
-DEFAULT_LOGO = REPO / "assets" / "testedmedia.svg"
+DEFAULT_BRAND = "SEO Radar Local"
+
 
 
 def brand_name():
@@ -63,14 +65,11 @@ def brand_name():
 
 
 def logo_html():
-    """Sidebar logo. Priority: LOGO_FILE (your own SVG) → BRAND_NAME wordmark →
-    default Tested Media logo."""
+    """Logotipo: SVG propio mediante LOGO_FILE o texto de BRAND_NAME."""
     logo_file = env("LOGO_FILE")
     if logo_file and pathlib.Path(logo_file).expanduser().exists():
         return pathlib.Path(logo_file).expanduser().read_text()
     name = brand_name()
-    if name == DEFAULT_BRAND and DEFAULT_LOGO.exists():
-        return DEFAULT_LOGO.read_text()
     return ('<span style="font-family:\'Plus Jakarta Sans\',sans-serif;font-weight:800;'
             'font-size:15px;letter-spacing:.4px;color:#fff">'
             + name.upper().replace(" ", "&thinsp;|&thinsp;", 1) + "</span>")
@@ -78,7 +77,7 @@ def logo_html():
 
 def load_keywords():
     if not KEYWORDS.exists():
-        raise SystemExit("data/keywords.json not found — run `python setup.py` first.")
+        return {"track_cap": 100, "brands": {}}
     return json.loads(KEYWORDS.read_text())
 
 
@@ -106,3 +105,4 @@ def telegram():
     token = env("TELEGRAM_BOT_TOKEN")
     chat = env("TELEGRAM_CHAT_ID")
     return {"token": token, "chat_id": chat} if token and chat else None
+

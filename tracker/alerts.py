@@ -50,3 +50,4 @@ msg = (f"📊 Rank Tracker — changes ({latest} vs {prev})\n\n" + "\n".join(sho
 data = urllib.parse.urlencode({"chat_id": CHAT, "text": msg, "disable_web_page_preview": "true"}).encode()
 urllib.request.urlopen(f"https://api.telegram.org/bot{TOK}/sendMessage", data, timeout=30)
 print(f"alert sent: {len(lines)} changes")
+

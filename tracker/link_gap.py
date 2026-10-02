@@ -246,22 +246,22 @@ def render(result):
         note = "local service-business peers" if b.get("local") else "top organic competitors"
         blocks.append(f"""
   <section class="card"><div class="chead"><h2>{brand}</h2><span class="dom">{b["domain"]}</span>
-    <span class="score">“{b["keyword"]}” · {note}: {comps}</span></div>
+    <span class="score">"{b["keyword"]}" · {note}: {comps}</span></div>
     <div class="scroll gscroll"><table><thead><tr>
       <th>Referring domain — they link to rivals, not you</th><th>DR</th><th>Type</th><th>Effort</th><th>How to get the link</th><th>Spam</th>
     </tr></thead><tbody>{rows or '<tr><td colspan=6 class="kw">No clean link gap found.</td></tr>'}</tbody></table></div>
   </section>""")
-    legend = ('<p class="legend">Domains linking to your rivals but not you, junk filtered, '
+    legend = ('<p class="legend">Dominios linking to your rivals but not you, junk filtered, '
               'classified by how to earn the link. Green type = easiest. Start at the top of each list.</p>')
     html = seo_shell.page(
         active="link-gap",
         title_html="Link <span>Gap</span>",
         content=legend + "".join(blocks),
         updated=result["generated"],
-        right_meta=f'Generated: {result["generated"]}',
+        right_meta=f'Generado: {result["generated"]}',
         refresh_tool="link-gap",
         extra_css=EXTRA_CSS)
-    OUT_HTML.write_text(html)
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 
@@ -270,3 +270,4 @@ if __name__ == "__main__":
         render(json.loads(OUT_JSON.read_text()))
     else:
         render(run())
+

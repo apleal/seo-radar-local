@@ -1,4 +1,4 @@
-// Site Explorer proxy — Ahrefs-style domain/page analysis from the edge via DataForSEO.
+// Explorador de sitios proxy — Ahrefs-style domain/page analysis from the edge via DataForSEO.
 // Auth enforced by _middleware.js (cookie gate). Creds = DFS_LOGIN/DFS_PASSWORD Pages secrets.
 //
 // Tabs (each is one POST {target, tab, ...}):
@@ -29,16 +29,16 @@ const BL = "https://api.dataforseo.com/v3/backlinks";
 export async function onRequestPost(context) {
   const login = context.env.DFS_LOGIN, pass = context.env.DFS_PASSWORD;
   if (!login || !pass)
-    return json({ ok: false, error: "DataForSEO credentials not configured on the server" }, 500);
+    return json({ ok: false, error: "Las credenciales de DataForSEO no están configuradas en el servidor" }, 500);
 
   let body;
   try { body = await context.request.json(); }
-  catch { return json({ ok: false, error: "invalid JSON" }, 400); }
+  catch { return json({ ok: false, error: "JSON no válido" }, 400); }
 
   const raw = String(body.target || "").toLowerCase()
     .replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[#?].*$/, "");
   if (!/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/.test(raw))
-    return json({ ok: false, error: "invalid domain or URL" }, 400);
+    return json({ ok: false, error: "dominio no válido or URL" }, 400);
   const isPage = raw.replace(/\/+$/, "").includes("/");
   const domain = raw.split("/")[0];
   const target = isPage ? "https://" + raw : domain; // backlinks API wants full URL for pages
@@ -281,3 +281,4 @@ export async function onRequestPost(context) {
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 }
+

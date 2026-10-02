@@ -1,5 +1,6 @@
 .env
-credentials/
+credentials/*
+!credentials/.gitkeep
 data/*
 !data/.gitkeep
 site/*.html

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SEO Command Center worker — runs trackers, polls the dashboard queue, deploys.
+"""SEO Radar Local worker — runs trackers, polls the dashboard queue, deploys.
 
 Commands:
   python worker.py run <tool>        run one tool now (rankings | research-page |
@@ -20,15 +20,21 @@ refresh buttons, keyword management and live research from the browser) needs a
 free Cloudflare account — see README.
 """
 import datetime
+import hashlib
+import hmac
 import http.server
+import html
 import json
+import os
 import pathlib
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
+from http.cookies import SimpleCookie
 
 REPO = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO / "tracker"))
@@ -56,6 +62,28 @@ PAGES = {  # rendered file -> site path
     "map-grid.html": "map-grid.html",
 }
 
+PAGE_ROUTES = {
+    "/": "/index.html",
+    "/research": "/research.html",
+    "/explorer": "/explorer.html",
+    "/competitors": "/competitors.html",
+    "/ai-visibility": "/ai-visibility.html",
+    "/site-health": "/site-health.html",
+    "/link-gap": "/link-gap.html",
+    "/map-grid": "/map-grid.html",
+}
+
+_job_lock = threading.Lock()
+_running_jobs = set()
+
+PENDING_REPORTS = {
+    "competitors.html": ("competitors", "Competidores", "Analiza tus competidores orgánicos y descubre palabras clave que ellos posicionan."),
+    "ai-visibility.html": ("ai-visibility", "Visibilidad en IA", "Comprueba si tu marca aparece en respuestas y resúmenes generados por IA."),
+    "site-health.html": ("site-health", "Salud SEO", "Audita títulos, descripciones, encabezados, enlaces y otros problemas técnicos."),
+    "link-gap.html": ("link-gap", "Oportunidades de enlaces", "Encuentra dominios que enlazan a tus competidores pero todavía no a tu web."),
+    "map-grid.html": ("map-grid", "Mapa de visibilidad local", "Mide tu posición en Google Maps desde distintos puntos de la ciudad."),
+}
+
 
 def run_tool(name):
     steps = TOOLS.get(name)
@@ -78,7 +106,30 @@ def render_all():
             subprocess.run([sys.executable, str(REPO / "tracker" / script), *args], check=True)
         except subprocess.CalledProcessError:
             print(f"  ({script} skipped — no data yet)", flush=True)
+    ensure_report_pages()
     copy_pages()
+
+
+def ensure_report_pages():
+    """Crea páginas informativas cuando un informe aún no tiene datos guardados."""
+    import shell
+    for filename, (active, title, description) in PENDING_REPORTS.items():
+        target = config.DATA / filename
+        if target.exists() and target.stat().st_size:
+            continue
+        content = f'''<section class="card"><div class="chead"><h2>Primer análisis pendiente</h2></div>
+<div style="padding:24px 20px"><p style="color:var(--ink2);max-width:720px">{description}</p>
+<p style="color:var(--mut);margin-top:10px">Pulsa «Ejecutar primer análisis». El proceso continuará en segundo plano y conservará el resultado en el volumen persistente.</p></div></section>'''
+        page = shell.page(
+            active=active,
+            title_html=title,
+            content=content,
+            refresh_tool=active,
+            refresh_label="Ejecutar primer análisis",
+            right_meta="Todavía no hay datos",
+        )
+        target.write_text(page, encoding="utf-8")
+        print(f"Report placeholder -> {target}", flush=True)
 
 
 def copy_pages():
@@ -88,19 +139,196 @@ def copy_pages():
             shutil.copy(f, config.SITE / dst)
 
 
-def serve(port=8000):
+def _auth_token(password, salt):
+    return hashlib.sha256(f"{password}|{salt}".encode()).hexdigest()
+
+
+def _login_page(brand, error=False):
+    brand = html.escape(brand)
+    error_html = '<p class="error">Clave incorrecta.</p>' if error else ""
+    return f'''<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acceso · {brand}</title><style>
+*{{box-sizing:border-box}}body{{background:#08080b;color:#f5f5f5;font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0}}
+.card{{width:min(420px,calc(100% - 32px));padding:34px;border:1px solid #303038;border-radius:16px;background:#101014}}
+h1{{margin:0 0 8px;color:#ff7a2e}}p{{color:#aaa}}label{{display:block;margin:24px 0 8px}}
+input,button{{width:100%;padding:12px;border-radius:8px;font:inherit}}input{{background:#08080b;color:#fff;border:1px solid #444}}
+button{{margin-top:14px;background:#ff7a2e;color:#16100c;border:0;font-weight:800;cursor:pointer}}.error{{color:#ff6b6b}}
+</style></head><body><main class="card"><h1>{brand}</h1><p>Acceso solo autorizado</p>
+<form method="post" action="/login"><label for="password">Clave de acceso</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+{error_html}<button type="submit">Entrar</button></form></main></body></html>'''.encode()
+
+
+class DashboardHandler(http.server.SimpleHTTPRequestHandler):
+    """Sirve exclusivamente el directorio publico, con autenticacion local."""
+    access_key = ""
+    auth_salt = "seo-radar-local"
+    brand_name = "SEO Radar Local"
+
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Content-Security-Policy", "frame-ancestors 'self'")
+        super().end_headers()
+
+    def list_directory(self, path):
+        self.send_error(404, "No encontrado")
+        return None
+
+    def _authenticated(self):
+        cookie = SimpleCookie()
+        try:
+            cookie.load(self.headers.get("Cookie", ""))
+        except Exception:
+            return False
+        value = cookie.get("rt_auth")
+        if not value:
+            return False
+        expected = _auth_token(self.access_key, self.auth_salt)
+        return hmac.compare_digest(value.value, expected)
+
+    def _send_login(self, error=False):
+        body = _login_page(self.brand_name, error)
+        self.send_response(401 if error else 200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _redirect(self, location):
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _json(self, payload, status=200):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    @staticmethod
+    def _run_background(tool):
+        try:
+            if tool == "all":
+                for name in TOOLS:
+                    if name not in {"rankings-full"}:
+                        run_tool(name)
+            else:
+                run_tool(tool)
+            render_all()
+        except BaseException as error:
+            print(f"Actualización {tool} fallida: {error}", flush=True)
+        finally:
+            with _job_lock:
+                _running_jobs.discard(tool)
+
+    def _queue_refresh(self, tool):
+        allowed = {"rankings", "competitors", "ai-visibility", "site-health", "link-gap", "map-grid", "all"}
+        if tool not in allowed:
+            self._json({"ok": False, "error": "herramienta desconocida"}, 400)
+            return
+        with _job_lock:
+            if tool in _running_jobs or "all" in _running_jobs:
+                self._json({"ok": True, "queued": tool, "running": True})
+                return
+            _running_jobs.add(tool)
+        threading.Thread(target=self._run_background, args=(tool,), daemon=True).start()
+        self._json({"ok": True, "queued": tool, "running": True, "used": 1, "limit": 2})
+
+    def do_GET(self):
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/health":
+            reports = {name: (config.SITE / name).exists() for name in PENDING_REPORTS}
+            body = json.dumps({"status": "ok", "service": "seo-radar-local",
+                               "build": "reports-v3", "reports": reports}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if path == "/logout":
+            self.send_response(303)
+            self.send_header("Location", "/login")
+            self.send_header("Set-Cookie", "rt_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if path == "/login":
+            if self._authenticated():
+                self._redirect("/")
+            else:
+                self._send_login()
+            return
+        if not self._authenticated():
+            self._redirect("/login")
+            return
+        if path in PAGE_ROUTES:
+            self.path = PAGE_ROUTES[path]
+        super().do_GET()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlsplit(self.path)
+        if parsed.path == "/refresh":
+            if not self._authenticated():
+                self._json({"ok": False, "error": "no autorizado"}, 401)
+                return
+            tool = (urllib.parse.parse_qs(parsed.query).get("tool") or [""])[0]
+            self._queue_refresh(tool)
+            return
+        if parsed.path != "/login":
+            self.send_error(404, "No encontrado")
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length <= 0 or length > 4096:
+            self.send_error(400, "Solicitud no valida")
+            return
+        form = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
+        supplied = (form.get("password") or [""])[0]
+        if not hmac.compare_digest(supplied, self.access_key):
+            self._send_login(error=True)
+            return
+        token = _auth_token(self.access_key, self.auth_salt)
+        self.send_response(303)
+        self.send_header("Location", "/")
+        self.send_header("Set-Cookie", f"rt_auth={token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+
+def _empty_page():
+    target = config.SITE / "index.html"
+    if not target.exists() or target.stat().st_size == 0:
+        target.write_text('''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SEO Radar Local</title><style>body{background:#08080b;color:#fff;font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0}.box{max-width:620px;padding:36px;border:1px solid #333;border-radius:16px}h1{color:#ff7a2e}</style></head><body><main class="box"><h1>SEO Radar Local</h1><p>Todavia no hay ninguna web configurada.</p><p>Ejecuta <code>python setup.py</code> y despues <code>python worker.py run all</code>.</p></main></body></html>''', encoding="utf-8")
+
+def serve(port=None):
+    port = int(port if port is not None else os.environ.get("PORT", "8000"))
+    DashboardHandler.access_key = config.require("ACCESS_KEY", "Configuralo como secreto en Easypanel.")
+    DashboardHandler.auth_salt = config.env("AUTH_SALT", "seo-radar-local")
+    DashboardHandler.brand_name = config.brand_name()
     render_all()
+    _empty_page()
     import functools
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(config.SITE))
-    print(f"Dashboard → http://localhost:{port}  (Ctrl-C to stop)")
-    print("Note: refresh/manage/research buttons need hosted mode (Cloudflare Pages Functions).")
-    http.server.HTTPServer(("127.0.0.1", port), handler).serve_forever()
+    handler = functools.partial(DashboardHandler, directory=str(config.SITE))
+    print(f"SEO Radar Local disponible en 0.0.0.0:{port} (Ctrl-C para detener)")
+    print("Panel protegido con ACCESS_KEY. Algunas acciones aun requieren la consola.")
+    http.server.ThreadingHTTPServer(("0.0.0.0", port), handler).serve_forever()
 
 
 def _cf():
     cf = config.cloudflare()
     if not cf:
-        raise SystemExit("Hosted mode not configured — set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
+        raise SystemExit("El modo alojado no está configurado — set CF_ACCOUNT_ID and CF_API_TOKEN in .env "
                          "(or use `python worker.py serve` for local mode).")
     return cf
 
@@ -171,10 +399,10 @@ def _kv(cf, path, method="GET", data=None):
 def loop():
     cf = _cf()
     if not cf.get("kv_namespace"):
-        raise SystemExit("No CF_KV_NAMESPACE in .env — run `python worker.py deploy-config` first.")
+        raise SystemExit("Falta CF_KV_NAMESPACE en .env — ejecuta primero `python worker.py deploy-config`.")
     run_hour = int(config.env("DAILY_REFRESH_HOUR", "6"))
     last_daily = None
-    print(f"Polling queue every 120s; daily refresh at {run_hour:02d}:00. Ctrl-C to stop.")
+    print(f"Consultando la cola cada 120 s; actualización diaria a las {run_hour:02d}:00. Ctrl-C to stop.")
     while True:
         try:
             # 1. apply keyword/domain management ops queued from the dashboard
@@ -213,7 +441,7 @@ def loop():
                 render_all()
                 deploy()
         except Exception as e:
-            print(f"loop error (retrying in 120s): {e}", flush=True)
+            print(f"error del bucle (nuevo intento en 120 s): {e}", flush=True)
         time.sleep(120)
 
 
@@ -229,7 +457,7 @@ if __name__ == "__main__":
     elif cmd == "render":
         render_all()
     elif cmd == "serve":
-        serve(int(sys.argv[2]) if len(sys.argv) > 2 else 8000)
+        serve(int(sys.argv[2]) if len(sys.argv) > 2 else None)
     elif cmd == "deploy":
         render_all()
         deploy()

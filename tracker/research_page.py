@@ -86,11 +86,11 @@ el('runbtn').onclick=function(){
     .then(function(r){return r.json();})
     .then(function(d){
       b.disabled=false; el('spin').style.display='none';
-      if(!d.ok){ toast('Failed: '+(d.error||'unknown')); return; }
+      if(!d.ok){ toast('No se pudo completar: '+(d.error||'unknown')); return; }
       results=d.rows||[];
       renderRows(d);
     })
-    .catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request failed — try again'); });
+    .catch(function(){ b.disabled=false; el('spin').style.display='none'; toast('Request no se pudo completar — inténtalo de nuevo'); });
 };
 
 function tracked(kw){
@@ -140,10 +140,10 @@ el('trackbtn').onclick=function(){
       if(d.ok){ toast('✓ '+kws.length+' keywords queued for '+sel.brand+' ('+sel.tier+') — tracking in ~2-5 min');
         (TRACKED[sel.brand]=TRACKED[sel.brand]||[]).push.apply(TRACKED[sel.brand],kws.map(function(k){return k.toLowerCase();}));
         renderRows({cost:0,used:'-',limit:'-'});
-        el('rescost').textContent='keywords queued — check the Rankings page after the next update';
-      } else { toast('Failed: '+(d.error||'unknown')); b.disabled=false; }
+        el('rescost').textContent='keywords queued — check the Posiciones page after the next update';
+      } else { toast('No se pudo completar: '+(d.error||'unknown')); b.disabled=false; }
     })
-    .catch(function(){ toast('Request failed'); b.disabled=false; });
+    .catch(function(){ toast('Request no se pudo completar'); b.disabled=false; });
 };
 """
 
@@ -168,8 +168,8 @@ def render():
   <div class="chips" id="rBrand"></div>
   <div class="frow" style="align-items:center">
     <div class="seg" id="rMode">
-      <button data-v="seeds" class="on">From seed keywords</button>
-      <button data-v="competitor">Steal from a competitor</button>
+      <button data-v="seeds" class="on">Desde palabras clave semilla</button>
+      <button data-v="competitor">Analizar un competidor</button>
     </div>
   </div>
   <div id="seedBox">
@@ -185,11 +185,11 @@ def render():
     <div class="hint">Pulls the top 200 keywords the competitor ranks for, sorted by volume — their organic playbook. ~$0.02 per pull.</div>
   </div>
   <div class="frow">
-    <button class="gobtn" id="runbtn">Run research<span id="spin"></span></button>
+    <button class="gobtn" id="runbtn">Buscar palabras clave<span id="spin"></span></button>
   </div>
   <div class="mlbl">Add selected keywords as</div>
   <div class="chips" id="rTier">
-    <button data-v="target" class="on">Target</button><button data-v="seed">Research seed</button>
+    <button data-v="target" class="on">Target</button><button data-v="seed">Palabras clave seed</button>
     <button data-v="local">Local</button><button data-v="brand">Brand</button>
   </div>
 </div>
@@ -197,12 +197,12 @@ def render():
   <div class="resbar">
     <span class="cnt" id="rescnt"></span>
     <span class="cost" id="rescost"></span>
-    <button class="trackbtn" id="trackbtn" disabled>Track 0 selected</button>
+    <button class="trackbtn" id="trackbtn" disabled>Monitorizar 0 seleccionadas</button>
   </div>
   <div class="scroll gscroll" style="max-height:600px">
     <table><thead><tr>
       <th class="ck"><input type="checkbox" id="selall" title="Select all"></th>
-      <th>Keyword</th><th style="text-align:right">Volume</th><th style="text-align:right">CPC</th><th>Competition</th><th style="text-align:right">Their rank</th>
+      <th>Palabra clave</th><th style="text-align:right">Volumen</th><th style="text-align:right">CPC</th><th>Competition</th><th style="text-align:right">Their rank</th>
     </tr></thead><tbody id="resbody"></tbody></table>
   </div>
 </section>
@@ -215,16 +215,17 @@ def render():
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     html = seo_shell.page(
         active="research",
-        title_html="Keyword <span>Research</span>",
+        title_html="Palabra clave <span>Palabras clave</span>",
         content=content,
         updated=now,
         right_meta="live DataForSEO · results in seconds",
         extra_css=EXTRA_CSS,
         body_end=body_end,
-        page_title="Keyword Research · " + config.brand_name())
-    OUT_HTML.write_text(html)
+        page_title="Palabra clave Palabras clave · " + config.brand_name())
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 
 if __name__ == "__main__":
     render()
+

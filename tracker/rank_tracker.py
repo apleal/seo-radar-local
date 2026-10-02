@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rankings dashboard — Pro-Rank-Tracker-style platform on DataForSEO + GSC.
+"""Posiciones dashboard — Pro-Rank-Tracker-style platform on DataForSEO + GSC.
 
 Per brand, merges 3 keyword sources, keeps the top `track_cap` (default 100)
 worth-it keywords (score = search volume + GSC impressions):
@@ -120,7 +120,7 @@ def research(header, cfg, force=False):
                         rows[k] = {"keyword": it.get("keyword"), "search_volume": ki.get("search_volume") or 0,
                                    "cpc": ki.get("cpc") or 0}
             except Exception as e:
-                print(f"    suggest '{seed}' failed: {e}", flush=True)
+                print(f"    suggest '{seed}' no se pudo completar: {e}", flush=True)
         out[brand] = rows
     RESEARCH_CACHE.write_text(json.dumps({"generated": gen if fresh else str(datetime.date.today()), "brands": out}))
     print(f"  research: refreshed {', '.join(to_fetch)} (${cost:.4f})", flush=True)
@@ -146,7 +146,7 @@ def gsc_queries(at, site):
                                            "clicks": int(row.get("clicks", 0)),
                                            "pos": round(row.get("position", 0), 1)}
     except Exception as e:
-        print(f"    GSC '{site}' failed: {e}", flush=True)
+        print(f"    GSC '{site}' no se pudo completar: {e}", flush=True)
     return out
 
 
@@ -167,12 +167,12 @@ def geo_check(header, keywords, location_name, domain):
                         gr = it.get("rank_absolute"); break
             out[kw] = gr
         except Exception as e:
-            print(f"    geo '{kw}' failed: {e}", flush=True)
+            print(f"    geo '{kw}' no se pudo completar: {e}", flush=True)
     return out, cost
 
 
 def select_worthy(merged, cap, brand_set=frozenset()):
-    """Brand terms are always tracked; then ranked kws; then highest-signal rest."""
+    """Términos de marca are always tracked; then ranked kws; then highest-signal rest."""
     def score(v):
         return (v.get("search_volume") or 0) + (v.get("gsc", {}).get("impr") or 0)
     chosen = {k: v for k, v in merged.items() if k in brand_set}
@@ -218,7 +218,7 @@ def local_serp(header, keywords, domain, location_name, lang, brand_name=""):
                     if idom == dom or idom.endswith("." + dom) or (bname and bname in title):
                         maps[kw] = it.get("rank_group") or it.get("rank_absolute")
         except Exception as e:
-            print(f"    local serp '{kw}' failed: {e}", flush=True)
+            print(f"    local serp '{kw}' no se pudo completar: {e}", flush=True)
     return out, maps, cost
 
 
@@ -239,7 +239,7 @@ def brand_serp(header, keywords, domain, loc, lang, device="desktop"):
                         out[kw] = (it.get("rank_absolute"), it.get("url") or "")
                         break
         except Exception as e:
-            print(f"    brand serp '{kw}' failed: {e}", flush=True)
+            print(f"    brand serp '{kw}' no se pudo completar: {e}", flush=True)
     return out, cost
 
 
@@ -409,7 +409,7 @@ def render():
             d7 = (p7 - rank) if (rank and p7) else None
             d30 = (p30 - rank) if (rank and p30) else None
             isnew = bool(rank) and prev is not None and not p1
-            key = brand + "" + kw
+            key = brand + "" + kw
             hist_json[key] = [[ca[5:16], r] for ca, r in h]
             rows_json.append({"brand": brand, "kw": kw, "rank": rank, "vol": vol or 0,
                 "cpc": round(cpc or 0, 2), "url": url or "", "src": source or "",
@@ -425,13 +425,13 @@ def render():
             .replace("__DATA__", json.dumps(rows_json))
             .replace("__HIST__", json.dumps(hist_json))
             .replace("__BRANDS__", json.dumps(brands_json)))
-    OUT_HTML.write_text(html)
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Dashboard -> {OUT_HTML} ({len(rows_json)} rows, {len(runs)} update{'s' if len(runs)!=1 else ''} of history)")
 
 
-_TEMPLATE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+_TEMPLATE = r"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>__BRAND__ · Rankings</title>
+<title>__BRAND__ · Posiciones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -558,42 +558,42 @@ tr:hover .kwdel{visibility:visible}
 <div class="app">
 <aside>
   <div class="logo">__LOGO__</div>
-  <div class="navlbl">Tracked URLs</div>
+  <div class="navlbl">Webs monitorizadas</div>
   <nav class="nav" id="nav"></nav>
-  <button id="addurl" style="margin:8px 4px 0;background:none;border:1.5px dashed rgba(255,122,46,.45);color:var(--gold);border-radius:12px;padding:10px;width:calc(100% - 8px);cursor:pointer;font-family:'Plus Jakarta Sans';font-weight:700;font-size:13px">＋ Add URL</button>
-  <div class="navlbl" style="margin-top:14px">Reports</div>
+  <button id="addurl" style="margin:8px 4px 0;background:none;border:1.5px dashed rgba(255,122,46,.45);color:var(--gold);border-radius:12px;padding:10px;width:calc(100% - 8px);cursor:pointer;font-family:'Plus Jakarta Sans';font-weight:700;font-size:13px">+ Añadir web</button>
+  <div class="navlbl" style="margin-top:14px">Informes</div>
   <nav class="nav">
-    <div class="navitem on"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="btxt"><span class="bname">Rankings</span><span class="bmeta">keywords &amp; positions</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/research'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></span><span class="btxt"><span class="bname">Research</span><span class="bmeta">keyword ideas</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/explorer'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg></span><span class="btxt"><span class="bname">Site Explorer</span><span class="bmeta">analyze any domain</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/competitors'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><span class="btxt"><span class="bname">Competitors</span><span class="bmeta">keyword gap</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/ai-visibility'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.4L22 18.3l-2.1.9L19 21.6l-.9-2.4-2.1-.9 2.1-.9z"/></svg></span><span class="btxt"><span class="bname">AI Visibility</span><span class="bmeta">AI Overview citations</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/site-health'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></span><span class="btxt"><span class="bname">Site Health</span><span class="bmeta">technical audit</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/link-gap'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 10a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></span><span class="btxt"><span class="bname">Link Gap</span><span class="bmeta">links competitors have</span></span></div>
-    <div class="navitem" role="button" tabindex="0" onclick="location.href='/map-grid'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span><span class="btxt"><span class="bname">Map Grid</span><span class="bmeta">local map-pack coverage</span></span></div>
+    <div class="navitem on"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="btxt"><span class="bname">Posiciones</span><span class="bmeta">keywords &amp; positions</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/research.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></span><span class="btxt"><span class="bname">Palabras clave</span><span class="bmeta">keyword ideas</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/explorer.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg></span><span class="btxt"><span class="bname">Explorador de sitios</span><span class="bmeta">analyze any domain</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/competitors.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><span class="btxt"><span class="bname">Competidores</span><span class="bmeta">keyword gap</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/ai-visibility.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.4L22 18.3l-2.1.9L19 21.6l-.9-2.4-2.1-.9 2.1-.9z"/></svg></span><span class="btxt"><span class="bname">Visibilidad en IA</span><span class="bmeta">AI Overview citations</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/site-health.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></span><span class="btxt"><span class="bname">Salud SEO</span><span class="bmeta">technical audit</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/link-gap.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 10a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></span><span class="btxt"><span class="bname">Oportunidades de enlaces</span><span class="bmeta">links competitors have</span></span></div>
+    <div class="navitem" role="button" tabindex="0" onclick="location.href='/map-grid.html'"><span class="bico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span><span class="btxt"><span class="bname">Mapa de visibilidad local</span><span class="bmeta">local map-pack coverage</span></span></div>
   </nav>
-  <div class="sfoot">Last update:<br>__UPDATED__<br><br>Google US · top 100<br>Updates daily · geo weekly</div>
+  <div class="sfoot">Última actualización:<br>__UPDATED__<br><br>Google España · top 100<br>Actualización diaria · mapa semanal</div>
 </aside>
 <main>
-  <div class="mhead"><h1>Rank <span>Tracker</span></h1><span class="upd">Last checked: __UPDATED__ · Google US organic · desktop</span></div>
+  <div class="mhead"><h1>Rank <span>Tracker</span></h1><span class="upd">Última comprobación: __UPDATED__ · Google España organic · desktop</span></div>
   <div class="kpis" id="kpis"></div>
   <div class="dist" id="dist"></div>
   <div class="controls">
-    <input type="search" id="q" placeholder="Filter keywords…">
+    <input type="search" id="q" placeholder="Filtrar palabras clave…">
     <div class="seg" id="src">
-      <button data-v="" class="on">All sources</button><button data-v="ranked">Ranked</button>
-      <button data-v="research">Research</button><button data-v="gsc">GSC</button>
+      <button data-v="" class="on">Todas las fuentes</button><button data-v="ranked">Ranked</button>
+      <button data-v="research">Palabras clave</button><button data-v="gsc">GSC</button>
     </div>
     <div class="seg" id="pos">
-      <button data-v="" class="on">Any rank</button><button data-v="top3">Top 3</button>
-      <button data-v="p1">Page 1</button><button data-v="strike">Striking 5-20</button>
+      <button data-v="" class="on">Cualquier posición</button><button data-v="top3">Top 3</button>
+      <button data-v="p1">Primera página</button><button data-v="strike">Striking 5-20</button>
       <button data-v="opp">Opportunity 20+</button>
     </div>
     <button class="pill" id="starf">★ Starred</button>
-    <button class="pill" id="brandf">Brand terms</button>
+    <button class="pill" id="brandf">Términos de marca</button>
     <button class="pill" id="localf">Local</button>
     <button class="pill" id="targetf">Targets</button>
-    <button class="pill" id="urlsf">Full URLs</button>
+    <button class="pill" id="urlsf">URLs completas</button>
     <div class="dd" id="psize">
       <button type="button" class="ddbtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Rows per table">
         <span class="ddlabel">Show 25</span>
@@ -603,46 +603,46 @@ tr:hover .kwdel{visibility:visible}
         <li role="option" data-v="15" aria-selected="false">Show 15</li>
         <li role="option" data-v="25" aria-selected="true">Show 25</li>
         <li role="option" data-v="50" aria-selected="false">Show 50</li>
-        <li role="option" data-v="0" aria-selected="false">Show all</li>
+        <li role="option" data-v="0" aria-selected="false">Mostrar todo</li>
       </ul>
     </div>
     <input type="number" id="minvol" placeholder="Min volume" style="width:112px">
-    <button class="pill" id="csv">Export CSV</button>
-    <button class="pill" id="refreshbtn">↻ Refresh rankings</button>
-    <button class="pill" id="addkw">＋ Keywords</button>
+    <button class="pill" id="csv">Exportar CSV</button>
+    <button class="pill" id="refreshbtn">↻ Actualizar posiciones</button>
+    <button class="pill" id="addkw">+ Palabra claves</button>
   </div>
   <div id="cards"></div>
   <footer>__BRAND__ · DataForSEO + Google Search Console · <span id="shown"></span> keywords shown</footer>
 </main>
 <div class="overlay" id="kwModal">
   <div class="modal">
-    <h3>Add keywords</h3>
+    <h3>Añadir palabras clave</h3>
     <div class="mlbl">Brand</div><div class="chips" id="kwBrand"></div>
     <div class="mlbl">Tier</div>
     <div class="chips" id="kwTier">
       <button data-v="target" class="on">Target</button><button data-v="brand">Brand</button>
-      <button data-v="local">Local</button><button data-v="seed">Research seed</button>
+      <button data-v="local">Local</button><button data-v="seed">Palabras clave seed</button>
     </div>
-    <div class="mlbl">Keywords — one per line (max 50)</div>
+    <div class="mlbl">Palabra claves — one per line (max 50)</div>
     <textarea id="kwList" rows="6" placeholder="ai receptionist pricing&#10;best ai answering service"></textarea>
-    <div class="mrow"><button class="mbtn ghost" data-close>Cancel</button><button class="mbtn go" id="kwGo">Add keywords</button></div>
+    <div class="mrow"><button class="mbtn ghost" data-close>Cancelar</button><button class="mbtn go" id="kwGo">Añadir palabras clave</button></div>
   </div>
 </div>
 <div class="overlay" id="urlModal">
   <div class="modal">
-    <h3>Add URL</h3>
-    <div class="mlbl">Brand name</div><input id="uName" placeholder="My Brand">
-    <div class="mlbl">Domain</div><input id="uDomain" placeholder="example.com">
+    <h3>Añadir web</h3>
+    <div class="mlbl">Nombre de la marca</div><input id="uName" placeholder="My Brand">
+    <div class="mlbl">Dominio</div><input id="uDominio" placeholder="example.com">
     <div class="mlbl">Seed keywords for research — one per line (optional)</div>
     <textarea id="uSeeds" rows="4" placeholder="best example service"></textarea>
-    <div class="mrow"><button class="mbtn ghost" data-close>Cancel</button><button class="mbtn go" id="urlGo">Add URL</button></div>
+    <div class="mrow"><button class="mbtn ghost" data-close>Cancelar</button><button class="mbtn go" id="urlGo">Añadir web</button></div>
   </div>
 </div>
 <div id="toast"></div>
 </div>
 <script>
 const DATA=__DATA__, HIST=__HIST__, BRANDS=__BRANDS__;
-const SEP="";
+const SEP="";
 let sortKey="vol", sortDir=-1, tab="", pageSize=25;
 const extraShown={};
 const state={q:"",src:"",pos:"",minvol:0,star:false,bterm:false,lterm:false,tterm:false};
@@ -692,7 +692,7 @@ function kpis(rows){
    <div class="kpi hl"><div class="n">${vis}%</div><div class="l">Visibility</div></div>
    <div class="kpi"><div class="n">${avg}</div><div class="l">Avg rank</div></div>
    <div class="kpi"><div class="n">${fmt(top3)}</div><div class="l">Top 3</div></div>
-   <div class="kpi"><div class="n">${fmt(p1)}</div><div class="l">Page 1</div></div>
+   <div class="kpi"><div class="n">${fmt(p1)}</div><div class="l">Primera página</div></div>
    <div class="kpi g"><div class="n">${fmt(up)}</div><div class="l">Improved</div></div>
    <div class="kpi r"><div class="n">${fmt(down)}</div><div class="l">Declined</div></div>
    <div class="kpi"><div class="n">${fmt(nw)}</div><div class="l">New</div></div>`;
@@ -755,7 +755,7 @@ function render(){
     html+=`<section class="card"><div class="chead"><h2>${b.brand}</h2><span class="dom">${b.domain}</span>
       <span class="score">${fmt(rs.length)} kw · ${fmt(rs.reduce((a,r)=>a+(r.vol||0),0))} vol/mo${b.geo?' · geo: '+b.geo:''}</span></div>
       <div class="scroll"><table><thead><tr>
-      <th class="star">★</th>${th('kw','Keyword')}${th('vol','Volume')}${th('rank','Rank')}${th('d1','1Δ')}${th('d7','7dΔ')}${th('d30','30dΔ')}${th('best','Best')}${th('mr','Mobile')}
+      <th class="star">★</th>${th('kw','Palabra clave')}${th('vol','Volumen')}${th('rank','Rank')}${th('d1','1Δ')}${th('d7','7dΔ')}${th('d30','30dΔ')}${th('best','Best')}${th('mr','Mobile')}
       ${geoCol?th('grank','Geo'):''}${th('impr','GSC impr')}${th('cpc','CPC')}${th('src','Source')}<th>URL</th><th>Trend</th>
       </tr></thead><tbody>`;
     shown.forEach(r=>{
@@ -782,15 +782,15 @@ function render(){
     if(limit<rs.length){
       html+=`<div class="morebar">Showing ${fmt(limit)} of ${fmt(rs.length)}
         <button class="pill" data-more="${b.brand}">Show ${Math.min(25,rs.length-limit)} more</button>
-        <button class="pill" data-all="${b.brand}">Show all</button></div>`;
+        <button class="pill" data-all="${b.brand}">Mostrar todo</button></div>`;
     }
     html+="</section>";
   });
-  el('cards').innerHTML=html||'<div class="card"><div class="chead">No keywords match these filters.</div></div>';
+  el('cards').innerHTML=html||'<div class="card"><div class="chead">Ninguna palabra clave coincide con estos filtros.</div></div>';
 }
 function buildNav(){
   const rowsAll=DATA;
-  let h=navBtn('','All URLs','portfolio · '+fmt(rowsAll.length)+' kw',ICO.globe);
+  let h=navBtn('','Todas las webs','portfolio · '+fmt(rowsAll.length)+' kw',ICO.globe);
   BRANDS.forEach(b=>{
     const rs=rowsAll.filter(r=>r.brand===b.brand);
     const rk=rs.filter(r=>r.rank);
@@ -811,7 +811,7 @@ function favIcon(domain,name){
   const fb=`<span class=&quot;bfall&quot;>${(name||'?')[0].toUpperCase()}</span>`;
   return `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" loading="lazy" onerror="this.outerHTML='${fb}'">`;
 }
-function navBtn(t,name,meta,icon){return `<div class="navitem ${tab===t?'on':''}" data-t="${t}" role="button" tabindex="0"><span class="bico">${icon||ICO.globe}</span><span class="btxt"><span class="bname">${name}</span><span class="bmeta">${meta}</span></span>${t?`<button class="bdel" data-deldom="${encodeURIComponent(t)}" title="Remove URL">✕</button>`:''}</div>`}
+function navBtn(t,name,meta,icon){return `<div class="navitem ${tab===t?'on':''}" data-t="${t}" role="button" tabindex="0"><span class="bico">${icon||ICO.globe}</span><span class="btxt"><span class="bname">${name}</span><span class="bmeta">${meta}</span></span>${t?`<button class="bdel" data-deldom="${encodeURIComponent(t)}" title="Eliminar web">✕</button>`:''}</div>`}
 document.addEventListener('click',e=>{
   const nb=e.target.closest('#nav .navitem');if(nb&&!e.target.closest('.bdel')){tab=nb.dataset.t;history.replaceState(null,'',tab?('#'+encodeURIComponent(tab)):location.pathname);openChart=null;buildNav();render();return}
   const st=e.target.closest('[data-star]');if(st){const k=decodeURIComponent(st.dataset.star);stars.has(k)?stars.delete(k):stars.add(k);localStorage.setItem('rt_stars',JSON.stringify([...stars]));render();return}
@@ -827,7 +827,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#targetf')){state.tterm=!state.tterm;el('targetf').classList.toggle('on',state.tterm);render();return}
   if(e.target.closest('#urlsf')){fullUrls=!fullUrls;el('urlsf').classList.toggle('on',fullUrls);document.body.classList.toggle('fullurls',fullUrls);render();return}
   const rb=e.target.closest('#refreshbtn');
-  if(rb){rb.textContent='Queuing…';fetch('/refresh?tool=rankings',{method:'POST'}).then(r=>r.json()).then(d=>{if(d.ok){rb.textContent='✓ Queued ('+d.used+'/'+d.limit+' today) — live in ~3 min';rb.classList.add('on')}else{rb.textContent='✗ '+(d.error||'failed')}}).catch(()=>{rb.textContent='✗ Failed — try again'});return}
+  if(rb){rb.textContent='Añadiendo tarea…';fetch('/refresh?tool=rankings',{method:'POST'}).then(r=>r.json()).then(d=>{if(d.ok){rb.textContent='✓ Tarea añadida ('+d.used+'/'+d.limit+' today) — live in ~3 min';rb.classList.add('on')}else{rb.textContent='✗ '+(d.error||'no se pudo completar')}}).catch(()=>{rb.textContent='✗ No se pudo completar — inténtalo de nuevo'});return}
   if(e.target.closest('.url a'))return;
   if(e.target.closest('#csv')){
     const rows=DATA.filter(passes);
@@ -869,12 +869,12 @@ el('minvol').addEventListener('input',e=>{state.minvol=+e.target.value||0;render
 })();
 function toast(m){const t=el('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',5000)}
 function mpost(payload,btn,okMsg){
-  if(btn){btn.disabled=true;btn.textContent='Queuing…'}
+  if(btn){btn.disabled=true;btn.textContent='Añadiendo tarea…'}
   return fetch('/manage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
     .then(r=>r.json()).then(d=>{
       if(d.ok){toast(okMsg+' — live in ~2-5 min');document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'))}
-      else toast('✗ '+(d.error||'failed'));
-    }).catch(()=>toast('✗ request failed')).finally(()=>{if(btn){btn.disabled=false;btn.textContent=btn.id==='kwGo'?'Add keywords':'Add URL'}});
+      else toast('✗ '+(d.error||'no se pudo completar'));
+    }).catch(()=>toast('✗ request no se pudo completar')).finally(()=>{if(btn){btn.disabled=false;btn.textContent=btn.id==='kwGo'?'Añadir palabras clave':'Añadir web'}});
 }
 let kwBrandSel=BRANDS[0]?BRANDS[0].brand:'';
 el('kwBrand').innerHTML=BRANDS.map((b,i)=>`<button data-v="${b.brand}" class="${i===0?'on':''}">${b.brand}</button>`).join('');
@@ -892,7 +892,7 @@ document.addEventListener('click',e=>{
     mpost({action:'add_keywords',brand:kwBrandSel,tier,keywords:kws},el('kwGo'),`✓ ${kws.length} keyword${kws.length>1?'s':''} queued for ${kwBrandSel}`);
     el('kwList').value='';return}
   if(e.target.closest('#urlGo')){
-    const name=el('uName').value.trim(),dom=el('uDomain').value.trim();
+    const name=el('uName').value.trim(),dom=el('uDominio').value.trim();
     if(!name||!dom){toast('Name and domain required');return}
     const seeds=el('uSeeds').value.split('\n').map(x=>x.trim()).filter(Boolean);
     mpost({action:'add_domain',name,domain:dom,seed_keywords:seeds},el('urlGo'),`✓ ${name} queued`);return}
@@ -903,7 +903,7 @@ document.addEventListener('click',e=>{
     return}
   const dd2=e.target.closest('.bdel');
   if(dd2){e.stopPropagation();const b=decodeURIComponent(dd2.dataset.deldom);
-    if(confirm(`Remove ${b} and ALL its keywords from tracking? History is kept.`)&&confirm(`Really remove ${b}?`))
+    if(confirm(`Eliminar ${b} and ALL its keywords from tracking? History is kept.`)&&confirm(`Really remove ${b}?`))
       mpost({action:'remove_domain',brand:b},null,`✓ Removing ${b}`);
     return}
 });

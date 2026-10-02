@@ -113,7 +113,7 @@ def track():
                     rank, top3_here, c = brand_rank_at(header, kw, lat, lng, zoom, domain, bname)
                     total += c
                 except Exception as e:
-                    print(f"    '{kw}' @ {lat},{lng} failed: {e}", flush=True)
+                    print(f"    '{kw}' @ {lat},{lng} no se pudo completar: {e}", flush=True)
                     rank, top3_here = None, []
                 rows.append((checked_at, brand, kw, lat, lng, rank,
                              json.dumps(top3_here) if top3_here else None))
@@ -212,7 +212,7 @@ def render():
 <span class="swatch"><i class="dot" style="background:#ff7a2e"></i>4–10</span>
 <span class="swatch"><i class="dot" style="background:#ff5c5c"></i>11+ / not shown</span>
 Each pin = your Google map-pack rank when someone searches from that exact spot.
-<button class="rfr" id="cfgbtn" style="margin-left:12px;padding:5px 12px;font-size:12px">⚙ Set up grid</button></p>
+<button class="rfr" id="cfgbtn" style="margin-left:12px;padding:5px 12px;font-size:12px">⚙ Configurar cuadrícula</button></p>
 <div id="mount"></div>
 <div class="overlay" id="ggModal">
   <div class="modal">
@@ -228,11 +228,11 @@ Each pin = your Google map-pack rank when someone searches from that exact spot.
     </div>
     <div class="mlbl">Point spacing (miles)</div>
     <input id="ggSpacing" type="number" step="0.5" min="0.5" max="15" value="3.5">
-    <div class="mlbl">Keywords — one per line (max 5)</div>
+    <div class="mlbl">Palabra claves — one per line (max 5)</div>
     <textarea id="ggKws" rows="4" placeholder="dentist&#10;emergency dentist"></textarea>
     <div class="mrow">
-      <button class="mbtn ghost" id="ggRemove" style="margin-right:auto;color:var(--down);border-color:rgba(255,92,92,.35);display:none">Remove grid</button>
-      <button class="mbtn ghost" data-close>Cancel</button><button class="mbtn go" id="ggGo">Save grid</button>
+      <button class="mbtn ghost" id="ggEliminar" style="margin-right:auto;color:var(--down);border-color:rgba(255,92,92,.35);display:none">Eliminar grid</button>
+      <button class="mbtn ghost" data-close>Cancelar</button><button class="mbtn go" id="ggGo">Guardar grid</button>
     </div>
   </div>
 </div>
@@ -245,8 +245,8 @@ function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; 
 function manage(body, okMsg){
   return fetch('/manage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
-    .then(function(d){ toast(d.ok?okMsg:('Failed: '+(d.error||'unknown'))); return d.ok; })
-    .catch(function(){ toast('Request failed — try again'); return false; });
+    .then(function(d){ toast(d.ok?okMsg:('No se pudo completar: '+(d.error||'unknown'))); return d.ok; })
+    .catch(function(){ toast('Request no se pudo completar — inténtalo de nuevo'); return false; });
 }
 function pinColor(r){ if(r===null||r===undefined) return '#ff5c5c'; if(r<=3) return '#39d98a'; if(r<=10) return '#ff7a2e'; return '#ff5c5c'; }
 function pinText(r){ return (r===null||r===undefined) ? '\\u2014' : String(r); }
@@ -304,7 +304,7 @@ function buildBrand(brand){
   var center = CENTERS[brand] || DATA[brand][kws[0]] && (function(){var r=DATA[brand][kws[0]];var f=r[Object.keys(r)[0]][0];return [f.lat,f.lng];})();
   card.innerHTML =
     '<div class="chead"><h2>'+brand+'</h2><span class="dom">local map-pack coverage</span></div>'
-    +'<div class="bar"><span class="lbl">Keyword</span><span class="kwchips"></span>'
+    +'<div class="bar"><span class="lbl">Palabra clave</span><span class="kwchips"></span>'
     +'<span class="runsel"><label class="cmp"><input type="checkbox" class="cmpbox"> vs prev</label>'
     +'<button class="prev">\\u2039</button><span class="rlabel"></span><button class="next">\\u203a</button></span></div>'
     +'<div class="kpis"><div class="kpi"><div class="v vAvg">—<span class="kd kdAvg"></span></div><div class="k">Avg map rank</div></div>'
@@ -323,7 +323,7 @@ function buildBrand(brand){
     x.onclick=function(ev){ ev.stopPropagation();
       if(!confirm('Stop tracking \\u201c'+kw+'\\u201d on the '+brand+' grid?')) return;
       manage({action:'remove_geogrid_keyword', brand:brand, keyword:kw},
-             'Removed \\u2014 grid re-scans in ~2-5 min'); };
+             'Eliminard \\u2014 grid re-scans in ~2-5 min'); };
     b.appendChild(x);
     b.onclick=function(){ state.kw=kw; state.runIdx=0; chipWrap.querySelectorAll('.chip').forEach(function(z){z.classList.remove('on');}); b.classList.add('on'); draw(); };
     chipWrap.appendChild(b);
@@ -410,7 +410,7 @@ function buildBrand(brand){
 }
 
 var brands=Object.keys(DATA);
-if(!brands.length){ document.getElementById('mount').innerHTML='<div class="card"><div class="empty">No grids configured yet. Click \\u201c\\u2699 Set up grid\\u201d to pick a brand, drop a center point and add keywords \\u2014 the first scan runs within ~5 minutes.</div></div>'; }
+if(!brands.length){ document.getElementById('mount').innerHTML='<div class="card"><div class="empty">Todavía no hay mapas configurados. Click \\u201c\\u2699 Set up grid\\u201d to pick a brand, drop a center point and add keywords \\u2014 the first scan runs within ~5 minutes.</div></div>'; }
 else { brands.forEach(buildBrand); }
 
 // ---- grid setup modal ----
@@ -434,7 +434,7 @@ function prefill(b){
   document.getElementById('ggKws').value = gg&&gg.keywords ? gg.keywords.join('\\n') : '';
   mSel.size = gg&&gg.grid ? gg.grid : 7;
   document.querySelectorAll('#ggSize button').forEach(function(z){ z.classList.toggle('on', +z.dataset.v===mSel.size); });
-  document.getElementById('ggRemove').style.display = gg ? '' : 'none';
+  document.getElementById('ggEliminar').style.display = gg ? '' : 'none';
 }
 document.querySelectorAll('#ggSize button').forEach(function(z){
   z.onclick=function(){ mSel.size=+z.dataset.v; document.querySelectorAll('#ggSize button').forEach(function(y){y.classList.remove('on');}); z.classList.add('on'); };
@@ -447,15 +447,15 @@ document.getElementById('ggGo').onclick=function(){
   var kws=document.getElementById('ggKws').value.split('\\n').map(function(s){return s.trim();}).filter(Boolean).slice(0,5);
   if(!mSel.brand) return toast('Pick a brand');
   if(!isFinite(lat)||!isFinite(lng)) return toast('Center must be \\u201clat, lng\\u201d');
-  if(!kws.length) return toast('Add at least one keyword');
+  if(!kws.length) return toast('Añade al menos una palabra clave');
   var pulls=mSel.size*mSel.size*kws.length;
   manage({action:'set_geogrid', brand:mSel.brand, center:[lat,lng], grid:mSel.size,
           spacing_miles:parseFloat(document.getElementById('ggSpacing').value)||3.5, keywords:kws},
          'Grid saved \\u2014 first scan ('+pulls+' points, ~$'+(pulls*0.002).toFixed(2)+') starts in ~2-5 min')
     .then(function(ok){ if(ok) modal.classList.remove('open'); });
 };
-document.getElementById('ggRemove').onclick=function(){
-  if(!mSel.brand||!confirm('Remove the '+mSel.brand+' grid? History stays in the database.')) return;
+document.getElementById('ggEliminar').onclick=function(){
+  if(!mSel.brand||!confirm('Eliminar the '+mSel.brand+' grid? History stays in the database.')) return;
   manage({action:'remove_geogrid', brand:mSel.brand}, 'Grid removed')
     .then(function(ok){ if(ok) modal.classList.remove('open'); });
 };
@@ -466,12 +466,12 @@ document.getElementById('ggRemove').onclick=function(){
         title_html="Map <span>Grid</span>",
         content=content,
         updated=now,
-        right_meta="Generated: " + now,
+        right_meta="Generado: " + now,
         refresh_tool="map-grid",
         extra_css=EXTRA_CSS,
         head_extra='<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">',
         body_end=body_end)
-    OUT_HTML.write_text(html)
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}", flush=True)
 
 
@@ -481,3 +481,4 @@ if __name__ == "__main__":
         track()
     if cmd in ("render", "both"):
         render()
+

@@ -142,10 +142,10 @@ def render(result):
     <span class="score">{len(b["gaps"])} gap keywords · vs {", ".join(b["picked"]) or "—"}</span></div>
     <div class="grid">
       <div><div class="sublbl">Top organic competitors</div>
-      <div class="scroll"><table><thead><tr><th>Domain</th><th>Shared kw</th><th>Their kw</th><th>Est. traffic</th></tr></thead>
+      <div class="scroll"><table><thead><tr><th>Dominio</th><th>Shared kw</th><th>Their kw</th><th>Est. traffic</th></tr></thead>
       <tbody>{comps or '<tr><td colspan=4>None found</td></tr>'}</tbody></table></div></div>
-      <div><div class="sublbl">Keyword gap — they rank, you don't (sorted: most competitors, then volume)</div>
-      <div class="scroll gscroll"><table><thead><tr><th>Keyword</th><th>Volume</th><th>CPC</th><th>Who ranks</th></tr></thead>
+      <div><div class="sublbl">Palabra clave gap — they rank, you don't (sorted: most competitors, then volume)</div>
+      <div class="scroll gscroll"><table><thead><tr><th>Palabra clave</th><th>Volumen</th><th>CPC</th><th>Who ranks</th></tr></thead>
       <tbody>{gaps or '<tr><td colspan=4>No gap — or run again later.</td></tr>'}</tbody></table></div></div>
     </div>
   </section>""")
@@ -154,10 +154,10 @@ def render(result):
         title_html="Competitor <span>Gap</span>",
         content="".join(brands_html),
         updated=result["generated"],
-        right_meta=f'Generated: {result["generated"]}',
+        right_meta=f'Generado: {result["generated"]}',
         refresh_tool="competitors",
         extra_css=EXTRA_CSS)
-    OUT_HTML.write_text(html)
+    OUT_HTML.write_text(html, encoding="utf-8")
     print(f"Report -> {OUT_HTML}")
 
 
@@ -166,3 +166,4 @@ if __name__ == "__main__":
         render(json.loads(OUT_JSON.read_text()))
     else:
         render(run())
+

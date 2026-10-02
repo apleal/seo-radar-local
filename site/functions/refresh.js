@@ -8,14 +8,14 @@ export async function onRequestPost(context) {
   const url = new URL(context.request.url);
   const tool = url.searchParams.get("tool") || "";
   if (!TOOLS.includes(tool)) {
-    return json({ ok: false, error: "unknown tool" }, 400);
+    return json({ ok: false, error: "herramienta desconocida" }, 400);
   }
   const kv = context.env.REFRESH_KV;
   const day = new Date().toISOString().slice(0, 10);
   const countKey = `count:${tool}:${day}`;
   const used = parseInt((await kv.get(countKey)) || "0", 10);
   if (used >= DAILY_LIMIT) {
-    return json({ ok: false, error: `daily limit reached (${DAILY_LIMIT}/day per tool)`, used, limit: DAILY_LIMIT }, 429);
+    return json({ ok: false, error: `se ha alcanzado el límite diario (${DAILY_LIMIT}/day per tool)`, used, limit: DAILY_LIMIT }, 429);
   }
   await kv.put(countKey, String(used + 1), { expirationTtl: 172800 });
   // single "queue" key ({tool: ts}) — the worker polls it every cycle, so one
@@ -42,3 +42,4 @@ function json(obj, status = 200) {
     status, headers: { "Content-Type": "application/json" },
   });
 }
+

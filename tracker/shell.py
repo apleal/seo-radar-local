@@ -3,7 +3,7 @@
 
 All tool pages (competitors, ai-visibility, site-health, link-gap, map-grid)
 render inside the SAME app shell as the main rankings dashboard: left sidebar
-with Tracked URLs + Reports nav, main column with mhead title row.
+with Webs monitorizadas + Informes nav, main column with mhead title row.
 
 Usage:
     import shell
@@ -11,7 +11,7 @@ Usage:
                           title_html="Competitor <span>Gap</span>",
                           content=blocks_html,
                           updated=generated,
-                          right_meta=f"Generated: {generated}",
+                          right_meta=f"Generado: {generated}",
                           refresh_tool="competitors",
                           extra_css=EXTRA_CSS)
 """
@@ -20,6 +20,7 @@ import pathlib
 import urllib.parse
 
 import config
+from i18n import t
 
 KEYWORDS = config.KEYWORDS
 
@@ -36,14 +37,14 @@ _ICONS = {
 _GLOBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>'
 
 _REPORTS = [
-    ("rankings", "/", "Rankings", "keywords &amp; positions"),
-    ("research", "/research", "Research", "keyword ideas"),
-    ("explorer", "/explorer", "Site Explorer", "analyze any domain"),
-    ("competitors", "/competitors", "Competitors", "keyword gap"),
-    ("ai-visibility", "/ai-visibility", "AI Visibility", "AI Overview citations"),
-    ("site-health", "/site-health", "Site Health", "technical audit"),
-    ("link-gap", "/link-gap", "Link Gap", "links competitors have"),
-    ("map-grid", "/map-grid", "Map Grid", "local map-pack coverage"),
+    ("rankings", "/", t("rankings"), "palabras clave y posiciones"),
+    ("research", "/research.html", t("research"), "ideas de palabras clave"),
+    ("explorer", "/explorer.html", t("site_explorer"), "analiza cualquier dominio"),
+    ("competitors", "/competitors.html", t("competitors"), "brecha de palabras clave"),
+    ("ai-visibility", "/ai-visibility.html", t("ai_visibility"), "menciones en respuestas de IA"),
+    ("site-health", "/site-health.html", t("site_health"), "auditoría técnica"),
+    ("link-gap", "/link-gap.html", t("link_gap"), "enlaces de la competencia"),
+    ("map-grid", "/map-grid.html", t("map_grid"), "visibilidad en Google Maps"),
 ]
 
 # Same tokens + sidebar CSS as the main dashboard template, plus the shared
@@ -123,8 +124,8 @@ footer{color:var(--mut);font-size:11.5px;text-align:center;margin-top:22px}
 
 _REFRESH_JS = """
 document.getElementById('refreshbtn').addEventListener('click',function(){
-  var b=this;b.textContent='Queuing\\u2026';
-  fetch('/refresh?tool=__TOOL__',{method:'POST'}).then(function(r){return r.json();}).then(function(d){b.textContent=d.ok?('\\u2713 Queued ('+d.used+'/'+d.limit+' today) \\u2014 new data in ~3-10 min'):('\\u2717 '+(d.error||'failed'));}).catch(function(){b.textContent='\\u2717 Failed \\u2014 try again';});
+  var b=this;b.textContent='Añadiendo tarea\\u2026';
+  fetch('/refresh?tool=__TOOL__',{method:'POST'}).then(function(r){return r.json();}).then(function(d){b.textContent=d.ok?('\\u2713 Tarea añadida ('+d.used+'/'+d.limit+' today) \\u2014 new data in ~3-10 min'):('\\u2717 '+(d.error||'no se pudo completar'));}).catch(function(){b.textContent='\\u2717 No se pudo completar \\u2014 inténtalo de nuevo';});
 });
 """
 
@@ -164,7 +165,7 @@ def page(active, title_html, content, updated="", right_meta="",
     refresh_btn = f'<button class="rfr" id="refreshbtn">{refresh_label}</button>' if refresh_tool else ""
     refresh_js = ("<script>" + _REFRESH_JS.replace("__TOOL__", refresh_tool) + "</script>") if refresh_tool else ""
     upd = f'<span class="upd">{right_meta}</span>' if right_meta else ""
-    return ("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    return ("""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>""" + page_title + """</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,11 +175,11 @@ def page(active, title_html, content, updated="", right_meta="",
 <div class="app">
 <aside>
   <div class="logo">""" + logo + """</div>
-  <div class="navlbl">Tracked URLs</div>
-  <nav class="nav"><a class="navitem" href="/"><span class="bico">""" + _GLOBE + """</span><span class="btxt"><span class="bname">All URLs</span><span class="bmeta">rankings dashboard</span></span></a>""" + _brand_items() + """</nav>
-  <div class="navlbl" style="margin-top:14px">Reports</div>
+  <div class="navlbl">Webs monitorizadas</div>
+  <nav class="nav"><a class="navitem" href="/"><span class="bico">""" + _GLOBE + """</span><span class="btxt"><span class="bname">Todas las webs</span><span class="bmeta">rankings dashboard</span></span></a>""" + _brand_items() + """</nav>
+  <div class="navlbl" style="margin-top:14px">Informes</div>
   <nav class="nav">""" + _reports_nav(active) + """</nav>
-  <div class="sfoot">Last update:<br>""" + (updated or "—") + """<br><br>Google US · top 100<br>Updates daily · geo weekly</div>
+  <div class="sfoot">Última actualización:<br>""" + (updated or "—") + """<br><br>Google España · top 100<br>Actualización diaria · mapa semanal</div>
 </aside>
 <main>
   <div class="mhead"><h1>""" + title_html + """</h1>""" + upd + refresh_btn + """</div>

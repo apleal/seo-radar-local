@@ -1,0 +1,16 @@
+services:
+  seo-radar-local:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      BRAND_NAME: SEO Radar Local
+      PORT: 8000
+      DAILY_REFRESH_HOUR: 6
+    volumes:
+      - radar-data:/app/data
+      - radar-credentials:/app/credentials
+    restart: unless-stopped
+volumes:
+  radar-data:
+  radar-credentials:

@@ -139,7 +139,7 @@ def main():
                     geogrid_changed = True
                     applied.append(f"remove_geogrid {op['brand']}")
         except Exception as e:
-            print(f"  op {key} failed: {e}")
+            print(f"  op {key} no se pudo completar: {e}")
         kv(f"/values/{urllib.parse.quote(key)}", method="DELETE")
     if applied:
         KEYWORDS.write_text(json.dumps(cfg, indent=2))
@@ -160,3 +160,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
